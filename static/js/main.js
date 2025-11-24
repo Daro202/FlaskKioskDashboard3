@@ -539,13 +539,20 @@ function toggleDarkMode() {
     localStorage.setItem('darkMode', isDark);
     updateThemeButton(isDark);
     
-    // Odśwież wykresy dla nowego motywu
-    updateChartsTheme(isDark);
+    // Odśwież wykresy dla nowego motywu (z obsługą błędów)
+    try {
+        updateChartsTheme(isDark);
+    } catch (error) {
+        console.log('Wykresy nie są jeszcze załadowane');
+    }
 }
 
 function updateThemeButton(isDark) {
-    document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
-    document.getElementById('theme-text').textContent = isDark ? 'Tryb jasny' : 'Tryb ciemny';
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    
+    if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌙';
+    if (themeText) themeText.textContent = isDark ? 'Tryb jasny' : 'Tryb ciemny';
 }
 
 function updateChartsTheme(isDark) {
@@ -553,11 +560,28 @@ function updateChartsTheme(isDark) {
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
     
     Object.values(charts).forEach(chart => {
-        if (chart && chart.options) {
-            chart.options.scales.x.ticks = { color: textColor };
-            chart.options.scales.y.ticks = { color: textColor };
-            chart.options.scales.y.grid = { color: gridColor };
-            chart.update();
+        if (chart && chart.options && chart.options.scales) {
+            try {
+                if (chart.options.scales.x && chart.options.scales.x.ticks) {
+                    chart.options.scales.x.ticks.color = textColor;
+                }
+                if (chart.options.scales.y) {
+                    if (chart.options.scales.y.ticks) {
+                        chart.options.scales.y.ticks.color = textColor;
+                    }
+                    if (chart.options.scales.y.grid) {
+                        chart.options.scales.y.grid.color = gridColor;
+                    }
+                }
+                if (chart.options.scales.y2) {
+                    if (chart.options.scales.y2.ticks) {
+                        chart.options.scales.y2.ticks.color = textColor;
+                    }
+                }
+                chart.update();
+            } catch (e) {
+                console.log('Nie można zaktualizować wykresu:', e);
+            }
         }
     });
 }
