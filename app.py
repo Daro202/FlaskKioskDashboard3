@@ -537,6 +537,130 @@ def upload_excel():
     
     return jsonify({'error': 'Niedozwolony typ pliku - wymagany plik .xlsx lub .xls'}), 400
 
+@app.route('/api/quiz/questions', methods=['GET'])
+def get_quiz_questions():
+    """Pobierz wszystkie pytania quizowe"""
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Brak autoryzacji'}), 401
+    
+    csv_path = 'data/quiz_questions.csv'
+    
+    if not os.path.exists(csv_path):
+        return jsonify([])
+    
+    try:
+        questions = []
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for idx, row in enumerate(reader, start=1):
+                row['id'] = idx
+                questions.append(row)
+        return jsonify(questions)
+    except Exception as e:
+        print(f"Błąd wczytywania pytań: {e}")
+        return jsonify([])
+
+@app.route('/api/quiz/question', methods=['POST'])
+def add_quiz_question():
+    """Dodaj nowe pytanie quizowe"""
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Brak autoryzacji'}), 401
+    
+    data = request.json or {}
+    csv_path = 'data/quiz_questions.csv'
+    
+    try:
+        # Pobierz wszystkie istniejące pytania
+        questions = []
+        if os.path.exists(csv_path):
+            with open(csv_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f, delimiter=';')
+                for row in reader:
+                    questions.append(row)
+        
+        # Znajdź najwyższe ID
+        max_id = 0
+        for q in questions:
+            try:
+                max_id = max(max_id, int(q.get('id', 0)))
+            except:
+                pass
+        
+        new_id = max_id + 1
+        
+        # Dodaj nowe pytanie
+        new_question = {
+            'id': str(new_id),
+            'category': data.get('category', ''),
+            'question': data.get('question', ''),
+            'answer1': data.get('answer1', ''),
+            'answer2': data.get('answer2', ''),
+            'answer3': data.get('answer3', ''),
+            'answer4': data.get('answer4', ''),
+            'correct_index': str(data.get('correct_index', 1)),
+            'explanation': data.get('explanation', ''),
+            'start_date': data.get('start_date', ''),
+            'end_date': data.get('end_date', '')
+        }
+        
+        questions.append(new_question)
+        
+        # Zapisz wszystkie pytania
+        with open(csv_path, 'w', encoding='utf-8', newline='') as f:
+            fieldnames = ['id', 'category', 'question', 'answer1', 'answer2', 'answer3', 'answer4', 
+                         'correct_index', 'explanation', 'start_date', 'end_date']
+            writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';')
+            writer.writeheader()
+            writer.writerows(questions)
+        
+        return jsonify({'success': True, 'id': new_id})
+        
+    except Exception as e:
+        print(f"Błąd dodawania pytania: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/quiz/question/<int:question_id>', methods=['DELETE'])
+def delete_quiz_question(question_id):
+    """Usuń pytanie quizowe"""
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Brak autoryzacji'}), 401
+    
+    csv_path = 'data/quiz_questions.csv'
+    
+    if not os.path.exists(csv_path):
+        return jsonify({'error': 'Plik nie istnieje'}), 404
+    
+    try:
+        # Wczytaj wszystkie pytania
+        questions = []
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for row in reader:
+                questions.append(row)
+        
+        # Usuń pytanie o danym ID (ID to pozycja w liście, 1-indeksowany)
+        if 1 <= question_id <= len(questions):
+            questions.pop(question_id - 1)
+        else:
+            return jsonify({'error': 'Pytanie nie znalezione'}), 404
+        
+        # Zapisz pozostałe pytania z nowymi ID
+        with open(csv_path, 'w', encoding='utf-8', newline='') as f:
+            fieldnames = ['id', 'category', 'question', 'answer1', 'answer2', 'answer3', 'answer4', 
+                         'correct_index', 'explanation', 'start_date', 'end_date']
+            writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=';')
+            writer.writeheader()
+            
+            for idx, q in enumerate(questions, start=1):
+                q['id'] = str(idx)
+                writer.writerow(q)
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        print(f"Błąd usuwania pytania: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/chart-data')
 def chart_data():
     """Zwróć dane do wykresów dla konkretnej maszyny"""

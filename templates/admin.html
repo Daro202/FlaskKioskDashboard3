@@ -180,6 +180,116 @@
                 </form>
             </div>
             
+            <!-- Sekcja: Zarządzanie quizem -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                    🧩 Zarządzanie pytaniami quizowymi
+                </h2>
+                
+                <!-- Formularz dodawania pytania -->
+                <div class="bg-blue-50 rounded-lg p-6 mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">Dodaj nowe pytanie</h3>
+                    <form id="quiz-form">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Kategoria</label>
+                                <input type="text" 
+                                       id="quiz_category"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="np. BHP, Jakość, Historia"
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Poprawna odpowiedź (nr 1-4)</label>
+                                <input type="number" 
+                                       id="quiz_correct"
+                                       min="1" max="4"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="1"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Treść pytania</label>
+                            <textarea id="quiz_question" 
+                                      rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder="Wpisz treść pytania..."
+                                      required></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Odpowiedź 1</label>
+                                <input type="text" 
+                                       id="quiz_answer1"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Pierwsza odpowiedź"
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Odpowiedź 2</label>
+                                <input type="text" 
+                                       id="quiz_answer2"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Druga odpowiedź"
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Odpowiedź 3</label>
+                                <input type="text" 
+                                       id="quiz_answer3"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Trzecia odpowiedź">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Odpowiedź 4</label>
+                                <input type="text" 
+                                       id="quiz_answer4"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       placeholder="Czwarta odpowiedź">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label class="block text-gray-700 font-semibold mb-2">Wyjaśnienie</label>
+                            <textarea id="quiz_explanation" 
+                                      rows="2"
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                      placeholder="Wyjaśnienie poprawnej odpowiedzi..."
+                                      required></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Data rozpoczęcia</label>
+                                <input type="date" 
+                                       id="quiz_start_date"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       required>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Data zakończenia</label>
+                                <input type="date" 
+                                       id="quiz_end_date"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-all">
+                            ➕ Dodaj pytanie
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Lista pytań -->
+                <div id="quiz-list" class="space-y-4">
+                    <!-- Pytania będą ładowane dynamicznie -->
+                </div>
+            </div>
+            
             <!-- Sekcja: Zarządzanie inspiracjami -->
             <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
@@ -368,6 +478,95 @@
                 setTimeout(() => location.reload(), 1000);
             }
         }
+        
+        // === QUIZ MANAGEMENT ===
+        
+        // Ładowanie listy pytań quizowych
+        async function loadQuizQuestions() {
+            const response = await fetch('/api/quiz/questions');
+            if (response.ok) {
+                const questions = await response.json();
+                const container = document.getElementById('quiz-list');
+                
+                if (questions.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">Brak pytań w bazie. Dodaj pierwsze pytanie!</p>';
+                    return;
+                }
+                
+                container.innerHTML = questions.map((q, idx) => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-all">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">${q.category}</span>
+                                    <span class="text-xs text-gray-500">${q.start_date} - ${q.end_date}</span>
+                                </div>
+                                <h4 class="font-bold text-lg text-gray-800 mb-2">${q.question}</h4>
+                                <div class="grid grid-cols-2 gap-2 text-sm">
+                                    ${q.answer1 ? `<div class="flex items-center gap-1"><span class="font-semibold ${q.correct_index == 1 ? 'text-green-600' : 'text-gray-600'}">1.</span> ${q.answer1}</div>` : ''}
+                                    ${q.answer2 ? `<div class="flex items-center gap-1"><span class="font-semibold ${q.correct_index == 2 ? 'text-green-600' : 'text-gray-600'}">2.</span> ${q.answer2}</div>` : ''}
+                                    ${q.answer3 ? `<div class="flex items-center gap-1"><span class="font-semibold ${q.correct_index == 3 ? 'text-green-600' : 'text-gray-600'}">3.</span> ${q.answer3}</div>` : ''}
+                                    ${q.answer4 ? `<div class="flex items-center gap-1"><span class="font-semibold ${q.correct_index == 4 ? 'text-green-600' : 'text-gray-600'}">4.</span> ${q.answer4}</div>` : ''}
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 italic">${q.explanation}</p>
+                            </div>
+                            <button onclick="deleteQuizQuestion(${q.id})" class="ml-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-all text-sm">
+                                🗑️ Usuń
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // Dodawanie pytania quizowego
+        document.getElementById('quiz-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                category: document.getElementById('quiz_category').value,
+                question: document.getElementById('quiz_question').value,
+                answer1: document.getElementById('quiz_answer1').value,
+                answer2: document.getElementById('quiz_answer2').value,
+                answer3: document.getElementById('quiz_answer3').value || '',
+                answer4: document.getElementById('quiz_answer4').value || '',
+                correct_index: parseInt(document.getElementById('quiz_correct').value),
+                explanation: document.getElementById('quiz_explanation').value,
+                start_date: document.getElementById('quiz_start_date').value,
+                end_date: document.getElementById('quiz_end_date').value
+            };
+            
+            const response = await fetch('/api/quiz/question', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                showSuccess();
+                e.target.reset();
+                loadQuizQuestions();
+            } else {
+                alert('Błąd podczas dodawania pytania');
+            }
+        });
+        
+        // Usuwanie pytania quizowego
+        async function deleteQuizQuestion(id) {
+            if (!confirm('Czy na pewno chcesz usunąć to pytanie?')) return;
+            
+            const response = await fetch(`/api/quiz/question/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                showSuccess();
+                loadQuizQuestions();
+            }
+        }
+        
+        // Załaduj pytania quizowe przy starcie
+        loadQuizQuestions();
         
         // Pokazywanie komunikatu sukcesu
         function showSuccess() {
