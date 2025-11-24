@@ -205,64 +205,74 @@ def load_long():
     """
     Wczytaj dane z pliku Export.xlsx i przekształć do formy długiej (long format)
     Format: Typ, Kod, Nazwa, Brygada, Dzien (1-31), Wartosc
+    POPRAWKA BŁĘDU DNIA 1: Poprawna obsługa plików z i bez kolumny 'Nazwa'
     """
     try:
-        # Spróbuj wczytać arkusz 'Eksport', 'Export' lub pierwszy dostępny
+        # Wczytaj dane z Export.xlsx - próbuj różnych nazw arkuszy
         try:
-            df = pd.read_excel('Export.xlsx', sheet_name='Eksport', engine='openpyxl')
+            df = pd.read_excel('Export.xlsx', sheet_name='Export', engine='openpyxl', header=None)
         except ValueError:
             try:
-                df = pd.read_excel('Export.xlsx', sheet_name='Export', engine='openpyxl')
+                df = pd.read_excel('Export.xlsx', sheet_name='Eksport', engine='openpyxl', header=None)
             except ValueError:
-                # Jeśli żaden nie istnieje, wczytaj pierwszy arkusz
-                df = pd.read_excel('Export.xlsx', sheet_name=0, engine='openpyxl')
+                try:
+                    df = pd.read_excel('Export.xlsx', sheet_name='Arkusz1', engine='openpyxl', header=None)
+                except ValueError:
+                    # Jeśli żadna nazwa nie pasuje, wczytaj pierwszy arkusz
+                    df = pd.read_excel('Export.xlsx', sheet_name=0, engine='openpyxl', header=None)
         
-        # Sprawdź czy kolumny to 'Unnamed' - wtedy brak nagłówków
-        if str(df.columns[0]).startswith('Unnamed'):
-            # Brak nagłówków - pierwsze 3 kolumny to Typ, Kod, Brygada (bez Nazwa)
-            df.columns = ['Typ', 'Kod', 'Brygada'] + list(df.columns[3:])
-            df['Nazwa'] = ''  # Dodaj pustą kolumnę Nazwa
-            first_day_col = 3
-            id_vars = ['Typ', 'Kod', 'Nazwa', 'Brygada']
-        elif 'Nazwa' in df.columns or len(df.columns) >= 4:
-            # Format z kolumną Nazwa
-            df.columns = ['Typ', 'Kod', 'Nazwa', 'Brygada'] + list(df.columns[4:])
-            first_day_col = 4
-            id_vars = ['Typ', 'Kod', 'Nazwa', 'Brygada']
+        # Sprawdź czy plik ma kolumnę Nazwa (4 kolumny przed dniami) czy nie (3 kolumny przed dniami)
+        # Sprawdzamy czy 4ta kolumna (indeks 3) to liczba czy tekst
+        if len(df.columns) >= 4:
+            sample_val = df.iloc[0, 3]
+            try:
+                # Jeśli można skonwertować na float lub to jest liczba, to nie ma kolumny Nazwa
+                if pd.notna(sample_val) and (isinstance(sample_val, (int, float)) or str(sample_val).replace('.', '').isdigit()):
+                    # Format: Typ, Kod, Brygada, [dni...]
+                    df.columns = ['Typ', 'Kod', 'Brygada'] + list(df.columns[3:])
+                    df['Nazwa'] = ''
+                    first_day_col_index = 3
+                else:
+                    # Format: Typ, Kod, Nazwa, Brygada, [dni...]
+                    df.columns = ['Typ', 'Kod', 'Nazwa', 'Brygada'] + list(df.columns[4:])
+                    first_day_col_index = 4
+            except:
+                # Domyślnie zakładamy brak kolumny Nazwa
+                df.columns = ['Typ', 'Kod', 'Brygada'] + list(df.columns[3:])
+                df['Nazwa'] = ''
+                first_day_col_index = 3
         else:
-            # Format bez nazwy (Typ, Kod, Brygada)
-            df.columns = ['Typ', 'Kod', 'Brygada'] + list(df.columns[3:])
-            df['Nazwa'] = ''  # Dodaj pustą kolumnę Nazwa
-            first_day_col = 3
-            id_vars = ['Typ', 'Kod', 'Nazwa', 'Brygada']
+            # Za mało kolumn - coś jest nie tak
+            raise ValueError("Plik Excel ma nieprawidłową strukturę")
+            
+        id_vars = ['Typ', 'Kod', 'Nazwa', 'Brygada']
         
-        # Przekształć nagłówki dni (kolumny od first_day_col+) na int
+        # Przekształć nagłówki dni (kolumny od first_day_col_index) na int
         day_cols = []
-        for col in df.columns[first_day_col:]:
+        for col in df.columns[first_day_col_index:]:
             try:
                 day_cols.append(int(col))
             except (ValueError, TypeError):
-                # Jeśli nie można przekonwertować na int, pomiń kolumnę
                 pass
         
         # Wybierz tylko kolumny podstawowe + dni jako int
-        valid_cols = id_vars + [c for c in df.columns[first_day_col:] if c in day_cols or str(c).isdigit()]
-        df = df[valid_cols]
+        valid_cols = id_vars + [c for c in df.columns[first_day_col_index:] if c in day_cols or str(c).isdigit()]
+        df_safe = df[valid_cols].copy()
         
         # Zmień nazwy kolumn dni na int
         col_rename = {}
-        for col in df.columns[first_day_col:]:
+        for col in df_safe.columns[first_day_col_index:]:
             try:
                 col_rename[col] = int(col)
             except (ValueError, TypeError):
                 pass
-        df.rename(columns=col_rename, inplace=True)
+        df_safe.rename(columns=col_rename, inplace=True)
         
         # Przekształć do formy długiej (melt)
-        value_vars = [col for col in df.columns if isinstance(col, int) and 1 <= col <= 31]
+        value_vars = [col for col in df_safe.columns if isinstance(col, int) and 1 <= col <= 31]
         
         df_long = pd.melt(
-            df,
+            df_safe,
             id_vars=id_vars,
             value_vars=value_vars,
             var_name='Dzien',
@@ -280,13 +290,16 @@ def load_long():
         df_long['Dzien'] = df_long['Dzien'].astype(int)
         df_long['Wartosc'] = df_long['Wartosc'].astype(float)
         
+        print(f"✅ Dane z Export.xlsx wczytane poprawnie: {len(df_long)} wierszy.")
         return df_long
     
     except FileNotFoundError:
-        # Jeśli plik nie istnieje, zwróć pusty DataFrame
+        print(f"❌ BŁĄD: Nie znaleziono pliku Export.xlsx")
         return pd.DataFrame(columns=['Typ', 'Kod', 'Nazwa', 'Brygada', 'Dzien', 'Wartosc'])
     except Exception as e:
         print(f"Błąd wczytywania danych z Export.xlsx: {e}")
+        import traceback
+        traceback.print_exc()
         return pd.DataFrame(columns=['Typ', 'Kod', 'Nazwa', 'Brygada', 'Dzien', 'Wartosc'])
 
 # ==================== TRASY (ROUTES) ====================
