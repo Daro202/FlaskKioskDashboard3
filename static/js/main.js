@@ -275,6 +275,11 @@ function createCombinedChart(series) {
     // Dodaj 10% marginesu na górze
     maxValue = Math.ceil(maxValue * 1.1);
     
+    // Sprawdź aktualny tryb (jasny/ciemny)
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#FFFFFF' : '#1F2937';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    
     // Utwórz wykres z dwiema osiami Y
     charts.production = new Chart(ctxProduction, {
         type: 'bar',
@@ -288,7 +293,10 @@ function createCombinedChart(series) {
             plugins: {
                 legend: {
                     display: true,
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        color: textColor
+                    }
                 }
             },
             scales: {
@@ -298,9 +306,16 @@ function createCombinedChart(series) {
                     position: 'left',
                     beginAtZero: true,
                     max: maxValue,
+                    ticks: {
+                        color: textColor
+                    },
+                    grid: {
+                        color: gridColor
+                    },
                     title: {
                         display: true,
-                        text: 'Produkcja dzienna'
+                        text: 'Produkcja dzienna',
+                        color: textColor
                     }
                 },
                 y2: {
@@ -309,15 +324,22 @@ function createCombinedChart(series) {
                     position: 'right',
                     beginAtZero: true,
                     max: maxValue,
+                    ticks: {
+                        color: textColor
+                    },
                     grid: {
                         drawOnChartArea: false
                     },
                     title: {
                         display: true,
-                        text: 'Produkcja narastająca'
+                        text: 'Produkcja narastająca',
+                        color: textColor
                     }
                 },
                 x: {
+                    ticks: {
+                        color: textColor
+                    },
                     grid: {
                         display: false
                     }
@@ -336,6 +358,11 @@ function createCharts(data) {
     const innovationData = [5, 7, 6, 8, 10, 9, 11]; // Przykładowe
     const efficiencyData = [85, 88, 90, 87, 92, 89, 94]; // Przykładowe
     
+    // Sprawdź aktualny tryb (jasny/ciemny)
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#FFFFFF' : '#1F2937';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    
     // Wspólne opcje dla wykresów
     const commonOptions = {
         responsive: true,
@@ -348,11 +375,17 @@ function createCharts(data) {
         scales: {
             y: {
                 beginAtZero: true,
+                ticks: {
+                    color: textColor
+                },
                 grid: {
-                    color: 'rgba(0, 0, 0, 0.05)'
+                    color: gridColor
                 }
             },
             x: {
+                ticks: {
+                    color: textColor
+                },
                 grid: {
                     display: false
                 }
@@ -556,28 +589,45 @@ function updateThemeButton(isDark) {
 }
 
 function updateChartsTheme(isDark) {
-    const textColor = isDark ? '#FFFFFF' : '#333333';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+    const textColor = isDark ? '#FFFFFF' : '#1F2937';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
     
     Object.values(charts).forEach(chart => {
-        if (chart && chart.options && chart.options.scales) {
+        if (chart && chart.options) {
             try {
-                if (chart.options.scales.x && chart.options.scales.x.ticks) {
-                    chart.options.scales.x.ticks.color = textColor;
+                // Aktualizuj legendę
+                if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                    chart.options.plugins.legend.labels.color = textColor;
                 }
-                if (chart.options.scales.y) {
-                    if (chart.options.scales.y.ticks) {
-                        chart.options.scales.y.ticks.color = textColor;
+                
+                // Aktualizuj osie
+                if (chart.options.scales) {
+                    if (chart.options.scales.x) {
+                        if (chart.options.scales.x.ticks) {
+                            chart.options.scales.x.ticks.color = textColor;
+                        }
                     }
-                    if (chart.options.scales.y.grid) {
-                        chart.options.scales.y.grid.color = gridColor;
+                    if (chart.options.scales.y) {
+                        if (chart.options.scales.y.ticks) {
+                            chart.options.scales.y.ticks.color = textColor;
+                        }
+                        if (chart.options.scales.y.grid) {
+                            chart.options.scales.y.grid.color = gridColor;
+                        }
+                        if (chart.options.scales.y.title) {
+                            chart.options.scales.y.title.color = textColor;
+                        }
+                    }
+                    if (chart.options.scales.y2) {
+                        if (chart.options.scales.y2.ticks) {
+                            chart.options.scales.y2.ticks.color = textColor;
+                        }
+                        if (chart.options.scales.y2.title) {
+                            chart.options.scales.y2.title.color = textColor;
+                        }
                     }
                 }
-                if (chart.options.scales.y2) {
-                    if (chart.options.scales.y2.ticks) {
-                        chart.options.scales.y2.ticks.color = textColor;
-                    }
-                }
+                
                 chart.update();
             } catch (e) {
                 console.log('Nie można zaktualizować wykresu:', e);
