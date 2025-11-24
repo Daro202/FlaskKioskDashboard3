@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - {{ header_title or 'Firmowy Kiosk' }}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Własne style -->
+    <link rel="stylesheet" href="/static/css/style.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        
+        .answer-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .answer-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .answer-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .answer-btn.correct {
+            background-color: #10b981 !important;
+            border-color: #059669 !important;
+            color: white !important;
+        }
+        
+        .answer-btn.incorrect {
+            background-color: #ef4444 !important;
+            border-color: #dc2626 !important;
+            color: white !important;
+        }
+        
+        .answer-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    
+    <!-- Panel boczny -->
+    <aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 z-50">
+        <div class="p-6">
+            <h2 class="text-2xl font-bold text-orange-500 mb-8">Menu</h2>
+            <nav>
+                <a href="/" class="nav-btn block w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 no-underline">
+                    <span class="text-lg">📊 Wykresy</span>
+                </a>
+                <a href="/" class="nav-btn block w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 no-underline">
+                    <span class="text-lg">💡 Inspiracje</span>
+                </a>
+                <a href="/" class="nav-btn block w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 no-underline">
+                    <span class="text-lg">📸 Zdjęcia</span>
+                </a>
+                <a href="/" class="nav-btn block w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 no-underline">
+                    <span class="text-lg">ℹ️ O nas</span>
+                </a>
+                <button class="nav-btn active w-full text-left py-4 px-4 mb-2 rounded-lg bg-orange-500 text-white">
+                    <span class="text-lg">🧩 Quiz</span>
+                </button>
+            </nav>
+            
+            <!-- Przełącznik trybu ciemnego -->
+            <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+                <button onclick="toggleDarkMode()" class="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all flex items-center justify-center gap-2">
+                    <span id="theme-icon">🌙</span>
+                    <span id="theme-text">Tryb ciemny</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Główna zawartość -->
+    <main class="ml-64 h-full flex flex-col transition-all duration-300">
+        
+        <!-- Nagłówek -->
+        <header class="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-8 px-12 shadow-lg">
+            <h1 id="header-title" class="text-5xl font-bold">Quiz / Pytanie dnia</h1>
+            <p class="text-xl mt-2 opacity-90">Sprawdź swoją wiedzę!</p>
+        </header>
+        
+        <!-- Sekcja treści quizu -->
+        <div class="flex-1 overflow-auto p-12">
+            {% if quiz %}
+            <div class="max-w-5xl mx-auto">
+                <!-- Kategoria -->
+                <div class="mb-6">
+                    <span class="inline-block px-6 py-2 bg-orange-500 text-white text-lg font-medium rounded-full">
+                        {{ quiz.category }}
+                    </span>
+                </div>
+                
+                <!-- Pytanie -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 mb-8">
+                    <h2 class="text-4xl font-bold text-gray-800 dark:text-white mb-8">
+                        {{ quiz.question }}
+                    </h2>
+                    
+                    <!-- Odpowiedzi -->
+                    <div class="grid grid-cols-1 gap-6">
+                        {% for answer in quiz.answers %}
+                        <button 
+                            class="answer-btn w-full text-left px-8 py-6 text-2xl font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white border-4 border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 dark:hover:border-orange-500"
+                            data-index="{{ loop.index0 }}"
+                            onclick="checkAnswer({{ loop.index0 }}, {{ quiz.correct_index }})"
+                        >
+                            <span class="inline-block w-12 h-12 mr-4 bg-orange-500 text-white rounded-full flex items-center justify-center text-xl font-bold">
+                                {{ loop.index }}
+                            </span>
+                            {{ answer }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Wyjaśnienie (ukryte do momentu odpowiedzi) -->
+                <div id="explanation" class="hidden bg-blue-50 dark:bg-blue-900 rounded-2xl shadow-xl p-8">
+                    <h3 class="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-4">
+                        💡 Wyjaśnienie
+                    </h3>
+                    <p class="text-xl text-blue-800 dark:text-blue-200">
+                        {{ quiz.explanation }}
+                    </p>
+                </div>
+            </div>
+            {% else %}
+            <div class="max-w-5xl mx-auto">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+                        Brak dostępnych pytań
+                    </h2>
+                    <p class="text-xl text-gray-600 dark:text-gray-400">
+                        Sprawdź plik data/quiz_questions.csv
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Stopka ze zdjęciem Story Logo -->
+        <footer class="bg-gradient-to-r from-gray-700 to-gray-800 text-white py-6 px-12 flex justify-between items-center">
+            <p id="footer-note" class="text-xl">{{ footer_note or 'Stora Enso - Innowacje dla Przyszłości' }}</p>
+            <div class="relative w-32 h-32">
+                <img src="/static/images/story_logo.png" alt="Story Logo" class="absolute bottom-0 right-0 w-full h-full object-contain animate-bounce-slow">
+            </div>
+        </footer>
+    </main>
+    
+    <script>
+        // Zarządzanie trybem ciemnym
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+            updateThemeButton(isDark);
+        }
+
+        function updateThemeButton(isDark) {
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            if (isDark) {
+                icon.textContent = '☀️';
+                text.textContent = 'Tryb jasny';
+            } else {
+                icon.textContent = '🌙';
+                text.textContent = 'Tryb ciemny';
+            }
+        }
+
+        // Wczytaj tryb ciemny z localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const darkMode = localStorage.getItem('darkMode');
+            if (darkMode === 'enabled') {
+                document.documentElement.classList.add('dark');
+                updateThemeButton(true);
+            }
+        });
+
+        // Funkcja sprawdzająca odpowiedź
+        let answered = false;
+        
+        function checkAnswer(selectedIndex, correctIndex) {
+            if (answered) return;
+            answered = true;
+            
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            buttons.forEach((btn, index) => {
+                btn.disabled = true;
+                
+                if (index === correctIndex) {
+                    btn.classList.add('correct');
+                } else if (index === selectedIndex && selectedIndex !== correctIndex) {
+                    btn.classList.add('incorrect');
+                }
+            });
+            
+            // Pokaż wyjaśnienie
+            const explanation = document.getElementById('explanation');
+            if (explanation) {
+                explanation.classList.remove('hidden');
+                // Animacja pojawienia się
+                setTimeout(() => {
+                    explanation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 300);
+            }
+        }
+    </script>
+</body>
+</html>

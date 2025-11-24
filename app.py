@@ -9,7 +9,8 @@ import os
 import json
 import sqlite3
 import secrets
-from datetime import datetime
+import csv
+from datetime import datetime, date
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -201,6 +202,72 @@ def get_slide_images():
             })
     return images
 
+def get_current_quiz_question():
+    """
+    Wczytaj aktualne pytanie quizowe z pliku CSV
+    Zwraca pytanie, które jest aktywne w obecnej dacie (start_date <= dzisiaj <= end_date)
+    Jeśli nie ma dopasowania, zwraca pierwsze pytanie z pliku
+    """
+    csv_path = 'data/quiz_questions.csv'
+    
+    # Sprawdź czy plik istnieje
+    if not os.path.exists(csv_path):
+        return None
+    
+    try:
+        today = date.today()
+        questions = []
+        
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter=';')
+            for row in reader:
+                questions.append(row)
+        
+        if not questions:
+            return None
+        
+        # Znajdź pytanie aktywne w obecnej dacie
+        active_question = None
+        for q in questions:
+            try:
+                start_date = datetime.strptime(q['start_date'], '%Y-%m-%d').date()
+                end_date = datetime.strptime(q['end_date'], '%Y-%m-%d').date()
+                
+                if start_date <= today <= end_date:
+                    active_question = q
+                    break
+            except (ValueError, KeyError):
+                continue
+        
+        # Jeśli nie znaleziono aktywnego, użyj pierwszego
+        if not active_question:
+            active_question = questions[0]
+        
+        # Przetwórz odpowiedzi
+        answers = []
+        for i in range(1, 5):
+            answer_key = f'answer{i}'
+            if answer_key in active_question and active_question[answer_key].strip():
+                answers.append(active_question[answer_key].strip())
+        
+        # Konwertuj correct_index z 1-indeksowany na 0-indeksowany
+        try:
+            correct_index = int(active_question.get('correct_index', 1)) - 1
+        except (ValueError, TypeError):
+            correct_index = 0
+        
+        return {
+            'category': active_question.get('category', ''),
+            'question': active_question.get('question', ''),
+            'answers': answers,
+            'correct_index': correct_index,
+            'explanation': active_question.get('explanation', '')
+        }
+        
+    except Exception as e:
+        print(f"Błąd wczytywania pytań quizowych: {e}")
+        return None
+
 def load_long():
     """
     Wczytaj dane z pliku Export.xlsx i przekształć do formy długiej (long format)
@@ -352,6 +419,18 @@ def admin_logout():
     """Wylogowanie z panelu admina"""
     session.pop('authenticated', None)
     return redirect(url_for('admin'))
+
+@app.route('/quiz')
+def quiz():
+    """Strona Quiz / Pytanie dnia"""
+    quiz_data = get_current_quiz_question()
+    header_title = get_setting('header_title')
+    footer_note = get_setting('footer_note')
+    
+    return render_template('quiz.html',
+                         quiz=quiz_data,
+                         header_title=header_title,
+                         footer_note=footer_note)
 
 # ==================== API ENDPOINTS ====================
 

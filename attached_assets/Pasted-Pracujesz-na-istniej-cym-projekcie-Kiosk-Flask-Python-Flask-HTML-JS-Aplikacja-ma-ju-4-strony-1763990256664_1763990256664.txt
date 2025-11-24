@@ -1,0 +1,54 @@
+Pracujesz na istniejącym projekcie Kiosk_Flask_Python (Flask + HTML/JS). 
+Aplikacja ma już 4 strony:
+- Wykresy
+- Inspiracje
+- Zdjęcia
+- O nas
+
+Chcę, żebyś dodał nową stronę: „Quiz / Pytanie dnia”, widoczną w lewym menu jako „🧩 Quiz”.
+Kiosk działa na dużym ekranie w trybie auto-rotacji, więc quiz musi działać wygodnie bez klawiatury, tylko na duże przyciski.
+
+## 1. Źródło danych: plik CSV
+
+Utwórz nowy plik CSV w UTF-8:
+
+    data/quiz_questions.csv
+
+Użyj **średnika** jako separatora (`;`), ponieważ plik będzie edytowany w polskim Excelu.
+
+Pierwszy wiersz to nagłówek, z kolumnami:
+
+    id;category;question;answer1;answer2;answer3;answer4;correct_index;explanation;start_date;end_date
+
+Znaczenie:
+- `category` – krótka etykieta, np. „BHP”, „Innowacje”, „Jakość”.
+- `question` – treść pytania (po polsku, może zawierać spacje i przecinki).
+- `answer1`..`answer4` – możliwe odpowiedzi (nie wszystkie 4 muszą być wypełnione; ale obsłuż do 4 przycisków).
+- `correct_index` – numer poprawnej odpowiedzi, **1-indeksowany** (1..4).
+- `explanation` – krótkie wyjaśnienie pokazywane po odpowiedzi.
+- `start_date`, `end_date` – daty w formacie `YYYY-MM-DD`, określające okres, kiedy pytanie jest aktywne.
+
+Dodaj proszę 2–3 przykładowe pytania do tego pliku, żebym widział jak to działa.
+
+## 2. Logika backendu (Flask)
+
+1. Znajdź główny plik aplikacji Flask (prawdopodobnie `main.py` albo `app.py`) i:
+
+   - Dodaj funkcję pomocniczą, która:
+     - otwiera `data/quiz_questions.csv`,
+     - używa `csv.DictReader` z `delimiter=';'`,
+     - filtruje wiersze tak, aby wybrać pytanie, dla którego:
+       `start_date <= dzisiejsza data <= end_date`,
+     - jeśli nie ma żadnego dopasowania, zwraca pierwszy wiersz z pliku,
+     - zamienia dane na słownik Pythona o kluczach:
+       `category`, `question`, `answers` (lista niepustych odpowiedzi),
+       `correct_index` (indeks 0-indeksowany, czyli 0..3),
+       `explanation`.
+
+2. Dodaj nową trasę Flask:
+
+   ```python
+   @app.route("/quiz")
+   def quiz():
+       quiz_data = get_current_quiz_question()  # nowa funkcja pomocnicza
+       return render_template("quiz.html", quiz=quiz_data)
