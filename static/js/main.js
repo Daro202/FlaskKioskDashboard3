@@ -9,6 +9,7 @@ let charts = {};
 let slides = [];
 let currentSlide = 0;
 let slideInterval = null;
+let isRotationPaused = false;
 
 // ==================== INICJALIZACJA ====================
 
@@ -137,6 +138,50 @@ function startAutoRotation() {
 function resetRotationTimer() {
     rotationTimer = 30;
     document.getElementById('rotation-timer').textContent = rotationTimer;
+}
+
+function stopAutoRotation() {
+    if (rotationInterval) {
+        clearInterval(rotationInterval);
+        rotationInterval = null;
+    }
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+}
+
+function toggleAutoRotation() {
+    const btn = document.getElementById('rotation-toggle');
+    const indicator = document.getElementById('rotation-indicator');
+    
+    if (isRotationPaused) {
+        // Wznów rotację
+        isRotationPaused = false;
+        startAutoRotation();
+        
+        // Zmień wygląd przycisku na "Stop"
+        btn.textContent = 'Stop';
+        btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+        btn.classList.add('bg-red-500', 'hover:bg-red-600');
+        
+        // Wznów animację wskaźnika
+        indicator.classList.add('animate-pulse', 'bg-green-500');
+        indicator.classList.remove('bg-gray-400');
+    } else {
+        // Zatrzymaj rotację
+        isRotationPaused = true;
+        stopAutoRotation();
+        
+        // Zmień wygląd przycisku na "Start"
+        btn.textContent = 'Start';
+        btn.classList.remove('bg-red-500', 'hover:bg-red-600');
+        btn.classList.add('bg-green-500', 'hover:bg-green-600');
+        
+        // Zatrzymaj animację wskaźnika
+        indicator.classList.remove('animate-pulse', 'bg-green-500');
+        indicator.classList.add('bg-gray-400');
+    }
 }
 
 // ==================== WYKRESY ====================
