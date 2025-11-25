@@ -1,4 +1,4 @@
-id;category;question;answer1;answer2;answer3;answer4;correct_index;explanation;start_date;end_date
+﻿id;category;question;answer1;answer2;answer3;answer4;correct_index;explanation;start_date;end_date
 1;BHP;Jaka jest maksymalna temperatura w hali produkcyjnej zgodnie z normami BHP?;18°C;22°C;26°C;30°C;2;Zgodnie z przepisami BHP, temperatura w hali produkcyjnej nie powinna przekraczać 22°C dla zapewnienia komfortu pracy.;2024-01-01;2025-12-31
 2;Innowacje;Który z elementów nie jest częścią filozofii Kaizen?;Ciągłe doskonalenie;Praca zespołowa;Eliminacja marnotrawstwa;Indywidualna konkurencja;4;Kaizen opiera się na współpracy zespołowej i ciągłym doskonaleniu procesów, nie na indywidualnej konkurencji.;2024-01-01;2025-12-31
 3;Jakość;Ile kontroli jakości przechodzi każdy wyrób przed opuszczeniem fabryki?;1 kontrola;2 kontrole;3 kontrole;4 kontrole;3;Każdy wyrób przechodzi 3 kontrole: kontrolę podczas produkcji, kontrolę po produkcji oraz kontrolę końcową przed pakowaniem.;2024-01-01;2025-12-31
