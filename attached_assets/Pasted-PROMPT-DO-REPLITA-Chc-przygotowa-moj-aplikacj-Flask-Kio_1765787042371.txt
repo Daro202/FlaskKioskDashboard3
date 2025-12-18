@@ -1,0 +1,117 @@
+PROMPT DO REPLITA:
+
+Chcę przygotować moją aplikację Flask Kiosk Dashboard do pełnej pracy OFFLINE na serwerze korporacyjnym (bez internetu). W tej chwili aplikacja korzysta z zewnętrznych zasobów takich jak CDN, Google Fonts i zewnętrzne obrazy. Proszę o wykonanie kompletu modyfikacji:
+
+1. Usuń wszystkie zewnętrzne źródła:
+
+Usuń użycie:
+
+https://cdn.tailwindcss.com
+
+https://cdn.jsdelivr.net/npm/chart.js
+
+https://cdn.plot.ly/...
+
+https://fonts.googleapis.com/...
+
+https://picsum.photos/... (fallback images)
+
+2. Wstaw lokalne wersje potrzebnych bibliotek
+
+W katalogu static/ utwórz:
+
+static/js/chart.js
+static/js/plotly.js
+static/js/tailwind.css  (lub wygenerowany tailwind.css)
+static/fonts/roboto.ttf  (lub roboto.woff2)
+static/icons/   (tu będą ikonki)
+
+
+Załaduj i dodaj w te miejsca:
+
+pełną wersję Chart.js (offline)
+
+pełną wersję Plotly.js
+
+plik tailwind.css wygenerowany na podstawie używanego stylu
+
+czcionkę Roboto w wersji offline
+
+komplet ikon używanych w menu (svg/png)
+
+3. Popraw wszystkie szablony HTML
+
+W plikach templates:
+
+index.html
+
+wykres.html
+
+quiz.html
+
+admin.html
+
+Zamień linki CDN na lokalne, np.:
+
+Było:
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+Ma być:
+
+<script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+
+
+oraz:
+
+<link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
+
+
+Zastąp Google Fonts lokalnym:
+
+<style>
+@font-face {
+    font-family: 'Roboto';
+    src: url('{{ url_for('static', filename='fonts/roboto.ttf') }}');
+}
+body { font-family: 'Roboto', sans-serif; }
+</style>
+
+4. Ikony menu
+
+W katalogu static/icons/ umieść wszystkie ikony używane przez aplikację.
+
+W HTML popraw ścieżki, np.:
+
+<img src="{{ url_for('static', filename='icons/chart.png') }}">
+
+5. Zdjęcia do sekcji Inspiracje / Slideshow
+
+Zamiast Picsum Photos użyj lokalnych zdjęć:
+
+static/images/slides/slide1.jpg
+static/images/slides/slide2.jpg
+static/images/slides/slide3.jpg
+
+
+W main.js usuń całkowicie wywołania Picsum i wstaw:
+
+const localImages = [
+    "/static/images/slides/slide1.jpg",
+    "/static/images/slides/slide2.jpg",
+    "/static/images/slides/slide3.jpg"
+];
+
+6. Nie zmieniaj logiki aplikacji Flask
+
+Backend działa poprawnie.
+Zmiana dotyczy tylko frontend / static.
+
+7. Po zakończeniu proszę o:
+
+listę wszystkich nowych plików dodanych do static/
+
+listę wszystkich zmian w HTML/JS
+
+informację, że aplikację można teraz uruchomić bez internetu

@@ -1,4 +1,3 @@
-<!-- Test commit - 18.12.2025 -->
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -6,22 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ header_title or 'Firmowy Kiosk' }}</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class'
-        }
-    </script>
+    <!-- Tailwind CSS (Offline) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js (Offline) -->
+    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
     
     <!-- Własne style -->
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
     <style>
         * {
@@ -46,26 +37,26 @@
             <h2 class="text-2xl font-bold text-orange-500 mb-8">Menu</h2>
             <nav>
                 <button onclick="showSection('wykresy')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="wykresy">
-                    <span class="text-lg">📊 Wykresy</span>
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="14" width="3" height="8"/><rect x="7" y="10" width="3" height="12"/><rect x="12" y="6" width="3" height="16"/><rect x="17" y="2" width="3" height="20"/></svg> Wykresy</span>
                 </button>
                 <button onclick="showSection('inspiracje')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="inspiracje">
-                    <span class="text-lg">💡 Inspiracje</span>
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg> Inspiracje</span>
                 </button>
                 <button onclick="showSection('zdjecia')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="zdjecia">
-                    <span class="text-lg">📸 Zdjęcia</span>
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-8v8h8v-8zm4-8h-3V2h-2v3h-4V2h-2v3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H5V7h14v14zm-7-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5z"/></svg> Zdjęcia</span>
                 </button>
                 <button onclick="showSection('o-nas')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="o-nas">
-                    <span class="text-lg">ℹ️ O nas</span>
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg> O nas</span>
                 </button>
                 <a href="/quiz" class="nav-btn block w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 no-underline">
-                    <span class="text-lg">🧩 Quiz</span>
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15h4v2h-4zm0-5h4v4h-4zm0-5h4v4h-4z"/></svg> Quiz</span>
                 </a>
             </nav>
             
             <!-- Przełącznik trybu ciemnego -->
             <div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <button onclick="toggleDarkMode()" class="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all flex items-center justify-center gap-2">
-                    <span id="theme-icon">🌙</span>
+                    <svg id="theme-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M9.37,5.51C9.69,5.56 10,5.58 10.32,5.58C14.37,5.58 17.6,8.81 17.6,12.86C17.6,16.91 14.37,20.14 10.32,20.14C9.37,20.14 8.48,20.03 7.63,19.82C11.35,18.72 13.93,15.41 13.93,11.38C13.92,7.35 11.35,4.03 7.63,2.93C8.48,2.72 9.37,2.61 10.32,2.61C14.37,2.61 17.6,5.84 17.6,9.89C17.6,13.94 14.37,17.17 10.32,17.17C9.69,17.17 9.09,17.12 8.5,17.03C11.56,15.78 13.93,12.65 13.93,8.95C13.93,5.25 11.56,2.12 8.5,0.87C9.09,0.78 9.69,0.73 10.32,0.73C15.82,0.73 20.27,5.18 20.27,10.68C20.27,16.18 15.82,20.63 10.32,20.63C5.82,20.63 1.37,16.18 1.37,10.68C1.37,6.95 3.64,3.78 6.88,2.38C5.03,2.92 3.6,4.5 3.6,6.42C3.6,8.95 5.73,11.08 8.26,11.08C10.79,11.08 12.92,8.95 12.92,6.42C12.92,4.99 12.33,3.71 11.42,2.77C12.13,2.74 12.82,2.72 13.51,2.72C13.36,3.43 13.25,4.16 13.25,4.92C13.25,8.53 16.07,11.52 19.63,11.84C19.24,13.76 18.3,15.46 16.98,16.72C15.13,15.4 13.75,13.4 13.75,11.08C13.75,7.88 16.29,5.34 19.49,5.34C19.91,5.34 20.31,5.37 20.7,5.44C19.97,4.47 19.08,3.63 18.02,2.98C18.77,2.98 19.5,3.08 20.2,3.27C18.98,2.03 17.26,1.2 15.33,1.2C12.09,1.2 9.44,3.58 8.88,6.73C7.88,6.84 6.93,7.08 6.01,7.44C6.86,5.04 8.85,3.36 11.29,3.36C12.76,3.36 14.15,3.99 15.07,5.01C14.66,5 14.26,4.99 13.84,4.99C10.97,4.99 8.65,7.31 8.65,10.18C8.65,12.57 10.09,14.62 12.07,15.5C10.66,17.62 8.22,18.95 5.49,18.95C4.17,18.95 2.92,18.67 1.8,18.1C3.24,20.17 5.7,21.5 8.5,21.5C13.16,21.5 17.02,18.26 17.96,13.88C19.13,14.73 20.02,15.86 20.43,17.21C17.88,18.19 15.87,20.18 15.87,22.62C15.87,24.03 16.73,25.28 17.97,25.8C17.3,25.92 16.6,25.99 15.9,25.99C12.8,25.99 10.2,24.05 9.03,21.23C8.46,21.3 7.87,21.34 7.27,21.34C4.45,21.34 1.89,20.15 0.35,18.23C0.82,18.26 1.28,18.28 1.75,18.28C3.56,18.28 5.28,17.92 6.82,17.27C7.65,16.24 8.13,14.97 8.13,13.59C8.13,11.69 7.13,9.99 5.67,9.1C5.46,8.38 5.35,7.62 5.35,6.84C5.35,4.28 7.17,2.2 9.54,1.89Z"/></svg>
                     <span id="theme-text">Tryb ciemny</span>
                 </button>
             </div>

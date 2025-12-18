@@ -537,11 +537,11 @@ async function loadSlidesData() {
         slides = await response.json();
         
         if (slides.length === 0) {
-            // Dodaj domyślne obrazy zastępcze jeśli brak
+            // Użyj lokalnych obrazów zastępczych (offline)
             slides = [
-                { url: 'https://picsum.photos/1920/1080?random=1', name: 'Slajd 1' },
-                { url: 'https://picsum.photos/1920/1080?random=2', name: 'Slajd 2' },
-                { url: 'https://picsum.photos/1920/1080?random=3', name: 'Slajd 3' }
+                { url: '/static/images/slides/slide1.jpg', name: 'Slajd 1' },
+                { url: '/static/images/slides/slide2.jpg', name: 'Slajd 2' },
+                { url: '/static/images/slides/slide3.jpg', name: 'Slajd 3' }
             ];
         }
         
