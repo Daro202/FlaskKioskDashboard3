@@ -78,15 +78,6 @@ function updateCurrentTime() {
 function showSection(sectionName) {
     console.log('Changing section to:', sectionName);
     
-    const sidebar = document.getElementById('sidebar');
-    const header = document.querySelector('header');
-    const main = document.querySelector('main');
-    
-    // Resetuj widoczność layoutu
-    if (sidebar) sidebar.style.display = 'block';
-    if (header) header.style.display = 'block';
-    if (main) main.classList.add('ml-64');
-
     // Usuń aktywność ze wszystkich sekcji i przycisków
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active', 'fade-in');
@@ -104,42 +95,23 @@ function showSection(sectionName) {
         section.style.display = 'block';
         section.style.zIndex = '9999';
         
-        // Dodatkowa wymuszenie dla Power BI
+        // Specjalne akcje dla Power BI
         if (sectionName === 'powerbi') {
-            if (sidebar) sidebar.style.display = 'none';
-            if (header) header.style.display = 'none';
-            if (main) main.classList.remove('ml-64');
-
             const iframe = document.getElementById('pbi-iframe');
             if (iframe) {
                 iframe.style.pointerEvents = 'auto';
                 
-                // Dodaj przycisk awaryjny do otwierania w nowym oknie
-                const container = section.querySelector('.flex-1');
-                if (container && !document.getElementById('pbi-fallback-btn')) {
+                // Przycisk awaryjny (zawsze widoczny w sekcji Power BI)
+                if (!document.getElementById('pbi-fallback-btn')) {
+                    const container = section.querySelector('.flex-1');
                     const btn = document.createElement('button');
                     btn.id = 'pbi-fallback-btn';
-                    btn.innerHTML = 'Otwórz raport w nowym oknie (jeśli logowanie nie działa)';
-                    btn.className = 'absolute bottom-4 left-1/2 -translate-x-1/2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl shadow-2xl z-[200000] font-bold transition-all';
+                    btn.innerHTML = 'Otwórz raport w pełnym oknie (rozwiązuje problem logowania)';
+                    btn.className = 'absolute bottom-8 left-1/2 -translate-x-1/2 bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-2xl shadow-2xl z-[200000] font-bold transition-all animate-bounce';
                     btn.onclick = () => window.open(iframe.src, '_blank');
-                    container.appendChild(btn);
+                    if (container) container.appendChild(btn);
                 }
             }
-
-            // Dodaj przycisk powrotu
-            if (!document.getElementById('pbi-back-btn')) {
-                const backBtn = document.createElement('button');
-                backBtn.id = 'pbi-back-btn';
-                backBtn.innerHTML = '← Powrót do Menu';
-                backBtn.className = 'fixed top-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-lg z-[200000] opacity-50 hover:opacity-100 transition-all';
-                backBtn.onclick = () => showSection('wykresy');
-                document.body.appendChild(backBtn);
-            } else {
-                document.getElementById('pbi-back-btn').style.display = 'block';
-            }
-        } else {
-            const backBtn = document.getElementById('pbi-back-btn');
-            if (backBtn) backBtn.style.display = 'none';
         }
 
         setTimeout(() => {
