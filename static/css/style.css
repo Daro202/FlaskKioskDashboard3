@@ -148,11 +148,23 @@ canvas {
     background: #E55A2B;
 }
 
-/* Tryb kiosk - ukryj kursor po 5 sekundach bezczynności */
-body.kiosk-mode {
-    cursor: none;
+/* Animowane logo StoraEnso */
+#logo-container {
+    pointer-events: none; /* Zapobiegaj blokowaniu kliknięć przez logo */
 }
 
-body.kiosk-mode * {
-    cursor: none !important;
+/* Wskaźnik automatycznej rotacji */
+.fixed.top-24.right-8 {
+    pointer-events: none; /* Kontener nie reaguje, ale przycisk w środku tak */
+}
+
+.fixed.top-24.right-8 button {
+    pointer-events: auto; /* Przycisk "Stop" musi być klikalny */
+}
+
+/* Gwarancja interaktywności dla Power BI */
+#section-powerbi iframe {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 50;
 }
