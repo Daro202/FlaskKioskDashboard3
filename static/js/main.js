@@ -78,8 +78,8 @@ function updateCurrentTime() {
 function showSection(sectionName) {
     // Usuń aktywność ze wszystkich sekcji i przycisków
     document.querySelectorAll('.content-section').forEach(section => {
-        section.classList.remove('active');
-        section.classList.add('hidden');
+        section.classList.remove('active', 'fade-in');
+        section.style.display = 'none';
     });
     
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -89,8 +89,10 @@ function showSection(sectionName) {
     // Aktywuj wybraną sekcję
     const section = document.getElementById(`section-${sectionName}`);
     if (section) {
-        section.classList.remove('hidden');
-        setTimeout(() => section.classList.add('active'), 10);
+        section.style.display = 'block';
+        setTimeout(() => {
+            section.classList.add('active');
+        }, 10);
     }
     
     // Aktywuj przycisk

@@ -80,10 +80,10 @@
         <div class="flex-1 overflow-hidden relative">
             
             <!-- Sekcja: Power BI -->
-            <section id="section-powerbi" class="content-section absolute inset-0 p-12 hidden">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden h-full flex flex-col relative" style="z-index: 10;">
+            <section id="section-powerbi" class="content-section absolute inset-0 p-12" style="display: none;">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden h-full flex flex-col relative" style="z-index: 100;">
                     <h2 class="text-3xl font-bold text-gray-800 dark:text-white p-6 border-b border-gray-100 dark:border-gray-700">Raport Power BI</h2>
-                    <div class="flex-1 relative" style="z-index: 20;">
+                    <div class="flex-1 relative" style="z-index: 110;">
                         <iframe title="Nowy raport z MySQL v3"
                                 width="100%"
                                 height="100%"
@@ -91,7 +91,7 @@
                                 frameborder="0"
                                 allowFullScreen="true"
                                 class="w-full h-full pointer-events-auto"
-                                style="position: relative; z-index: 30;">
+                                style="position: relative; z-index: 120; min-height: 500px;">
                         </iframe>
                     </div>
                 </div>
