@@ -149,23 +149,22 @@ canvas {
     background: #E55A2B;
 }
 
-/* Animowane logo StoraEnso */
-#logo-container {
-    pointer-events: none; /* Zapobiegaj blokowaniu kliknięć przez logo */
-}
-
-/* Wskaźnik automatycznej rotacji */
-.fixed.top-24.right-8 {
-    pointer-events: none; /* Kontener nie reaguje, ale przycisk w środku tak */
-}
-
-.fixed.top-24.right-8 button {
-    pointer-events: auto; /* Przycisk "Stop" musi być klikalny */
-}
-
 /* Gwarancja interaktywności dla Power BI */
 #section-powerbi iframe {
     pointer-events: auto !important;
     position: relative;
-    z-index: 50;
+    z-index: 99999 !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Diagnostyczny overlay reset */
+.content-section.active * {
+    pointer-events: auto !important;
+}
+
+/* Ukryj logo i rotację jeśli mogą zasłaniać przycisk w kiosku */
+body.kiosk-mode #logo-container,
+body.kiosk-mode .fixed.top-24.right-8 {
+    display: none !important;
 }

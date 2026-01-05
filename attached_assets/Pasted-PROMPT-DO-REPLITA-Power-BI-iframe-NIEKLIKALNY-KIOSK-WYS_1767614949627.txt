@@ -1,0 +1,89 @@
+PROMPT DO REPLITA – Power BI iframe NIEKLIKALNY (KIOSK / WYSE)
+
+Kontekst:
+Mam aplikację webową (HTML/CSS/JS), uruchamianą w trybie kiosk (Dell Wyse, fullscreen).
+Osadzony jest raport Power BI w <iframe>. Raport się ładuje, ale przycisk „Zaloguj” w Power BI NIE jest klikalny – klik nie reaguje.
+Na zwykłym komputerze (desktop) wszystko działa poprawnie.
+
+Twoje zadanie:
+Zdiagnozuj i zaproponuj konkretne poprawki w kodzie, aby:
+
+upewnić się, że iframe nie jest przykryty żadną warstwą
+
+iframe przyjmuje kliknięcia
+
+wyeliminować CSS/JS blokujące interakcję
+
+zaproponować bezpieczne obejście dla kiosku, jeśli logowanie Power BI w iframe jest technicznie niemożliwe
+
+1️⃣ Sprawdź i popraw CSS (NAJWAŻNIEJSZE)
+
+Zweryfikuj, czy nad iframe nie ma overlay / div / panelu
+
+Sprawdź z-index, position, pointer-events
+
+Zaproponuj docelowy CSS, np.:
+
+.powerbi-container {
+  position: relative;
+  z-index: 1;
+}
+
+.powerbi-container iframe {
+  width: 100%;
+  height: 100vh;
+  border: 0;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+
+oraz testowe usunięcie overlay:
+
+* {
+  pointer-events: auto !important;
+}
+
+2️⃣ Sprawdź layout (flex / grid / absolute)
+
+Jeśli layout używa position:absolute, flex, grid
+
+Sprawdź, czy sidebar / header nie nachodzi niewidzialnie na iframe
+
+Zaproponuj poprawny układ HTML
+
+3️⃣ Zaproponuj test diagnostyczny
+
+Dodaj tymczasowy handler:
+
+document.addEventListener('click', e => {
+  console.log('CLICK:', e.target);
+});
+
+
+aby potwierdzić, czy klik dociera do iframe
+
+4️⃣ Jeśli to ograniczenie kiosku / Power BI
+
+Jeśli Power BI nie obsługuje logowania w iframe w trybie kiosk, zaproponuj alternatywy:
+
+✅ Opcja A – otwarcie raportu poza iframe
+window.open("https://app.powerbi.com/...", "_blank");
+
+✅ Opcja B – Publish to Web (bez logowania)
+
+Jeśli dane nie są wrażliwe
+
+✅ Opcja C – Power BI Embedded (token)
+
+Jeśli to aplikacja korporacyjna
+
+5️⃣ Oczekiwany output
+
+konkretne zmiany w HTML / CSS / JS
+
+krótka diagnoza „DLACZEGO nie klika”
+
+rekomendacja najlepszej opcji dla kiosku (Wyse)
+
+Nie tłumacz teorii Power BI – skup się na naprawie problemu interakcji.

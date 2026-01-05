@@ -76,10 +76,13 @@ function updateCurrentTime() {
 // ==================== NAWIGACJA SEKCJI ====================
 
 function showSection(sectionName) {
+    console.log('Changing section to:', sectionName);
+    
     // Usuń aktywność ze wszystkich sekcji i przycisków
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active', 'fade-in');
         section.style.display = 'none';
+        section.style.zIndex = '1';
     });
     
     document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -90,6 +93,16 @@ function showSection(sectionName) {
     const section = document.getElementById(`section-${sectionName}`);
     if (section) {
         section.style.display = 'block';
+        section.style.zIndex = '9999';
+        
+        // Dodatkowa wymuszenie dla Power BI
+        if (sectionName === 'powerbi') {
+            const iframe = document.getElementById('pbi-iframe');
+            if (iframe) {
+                iframe.style.pointerEvents = 'auto';
+            }
+        }
+
         setTimeout(() => {
             section.classList.add('active');
         }, 10);
