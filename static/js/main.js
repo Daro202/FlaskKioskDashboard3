@@ -95,29 +95,17 @@ function showSection(sectionName) {
         section.style.display = 'block';
         section.style.zIndex = '9999';
         
-        // Specjalne akcje dla Power BI
-        if (sectionName === 'powerbi') {
-            const iframe = document.getElementById('pbi-iframe');
-            if (iframe) {
-                iframe.style.pointerEvents = 'auto';
-                
-                // Przycisk awaryjny (zawsze widoczny w sekcji Power BI)
-                if (!document.getElementById('pbi-fallback-btn')) {
-                    const container = section.querySelector('.flex-1');
-                    const btn = document.createElement('button');
-                    btn.id = 'pbi-fallback-btn';
-                    btn.innerHTML = 'Otwórz raport w pełnym oknie (rozwiązuje problem logowania)';
-                    btn.className = 'absolute bottom-8 left-1/2 -translate-x-1/2 bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-2xl shadow-2xl z-[200000] font-bold transition-all animate-bounce';
-                    btn.onclick = () => window.open(iframe.src, '_blank');
-                    if (container) container.appendChild(btn);
-                }
-            }
-        }
-
         setTimeout(() => {
             section.classList.add('active');
         }, 10);
     }
+    
+    // Aktywuj przycisk
+    const btn = document.querySelector(`[data-section="${sectionName}"]`);
+    if (btn) {
+        btn.classList.add('active');
+    }
+}
     
     // Aktywuj przycisk
     const btn = document.querySelector(`[data-section="${sectionName}"]`);

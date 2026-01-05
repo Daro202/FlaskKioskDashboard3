@@ -80,21 +80,23 @@
         <div class="flex-1 overflow-hidden relative" id="main-content-area">
             
             <!-- Sekcja: Power BI -->
-            <section id="section-powerbi" class="content-section absolute inset-0 p-12" style="display: none; z-index: 9999;">
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden h-full flex flex-col relative">
-                    <h2 class="text-3xl font-bold text-gray-800 dark:text-white p-6 border-b border-gray-100 dark:border-gray-700">Raport Power BI</h2>
-                    <div class="flex-1 relative">
-                        <iframe title="Nowy raport z MySQL v3"
-                                id="pbi-iframe"
-                                width="100%"
-                                height="100%"
-                                src="https://app.powerbi.com/reportEmbed?reportId=231840d0-8264-41ac-8ab0-25dc34d8aca2&autoAuth=true&ctid=75998ea3-790c-40ea-ac1e-02ee8edfb00f"
-                                frameborder="0"
-                                allowFullScreen="true"
-                                class="w-full h-full pointer-events-auto"
-                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100000 !important;">
-                        </iframe>
+            <section id="section-powerbi" class="content-section absolute inset-0 p-12" style="display: none;">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden h-full flex flex-col items-center justify-center p-12 text-center">
+                    <div class="mb-8 text-orange-500">
+                        <svg width="120" height="120" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                        </svg>
                     </div>
+                    <h2 class="text-5xl font-bold text-gray-800 dark:text-white mb-6">Raport Power BI</h2>
+                    <p class="text-2xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl leading-relaxed">
+                        Ze względów bezpieczeństwa i pełnej interaktywności, raporty Power BI otwierane są w nowym oknie przeglądarki.
+                    </p>
+                    <button onclick="window.open('https://app.powerbi.com/reportEmbed?reportId=231840d0-8264-41ac-8ab0-25dc34d8aca2&autoAuth=true&ctid=75998ea3-790c-40ea-ac1e-02ee8edfb00f', '_blank', 'noopener,noreferrer')" 
+                            class="bg-orange-500 hover:bg-orange-600 text-white text-3xl font-bold py-8 px-16 rounded-3xl shadow-2xl transition-all transform hover:scale-105 flex items-center gap-4">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        Otwórz Raport
+                    </button>
+                    <p class="mt-8 text-sm text-gray-400">Po zalogowaniu raport będzie w pełni interaktywny.</p>
                 </div>
             </section>
 
