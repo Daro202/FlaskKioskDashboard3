@@ -78,6 +78,15 @@ function updateCurrentTime() {
 function showSection(sectionName) {
     console.log('Changing section to:', sectionName);
     
+    const sidebar = document.getElementById('sidebar');
+    const header = document.querySelector('header');
+    const main = document.querySelector('main');
+    
+    // Resetuj widoczność layoutu
+    if (sidebar) sidebar.style.display = 'block';
+    if (header) header.style.display = 'block';
+    if (main) main.classList.add('ml-64');
+
     // Usuń aktywność ze wszystkich sekcji i przycisków
     document.querySelectorAll('.content-section').forEach(section => {
         section.classList.remove('active', 'fade-in');
@@ -97,6 +106,10 @@ function showSection(sectionName) {
         
         // Dodatkowa wymuszenie dla Power BI
         if (sectionName === 'powerbi') {
+            if (sidebar) sidebar.style.display = 'none';
+            if (header) header.style.display = 'none';
+            if (main) main.classList.remove('ml-64');
+
             const iframe = document.getElementById('pbi-iframe');
             if (iframe) {
                 iframe.style.pointerEvents = 'auto';
@@ -112,6 +125,21 @@ function showSection(sectionName) {
                     container.appendChild(btn);
                 }
             }
+
+            // Dodaj przycisk powrotu
+            if (!document.getElementById('pbi-back-btn')) {
+                const backBtn = document.createElement('button');
+                backBtn.id = 'pbi-back-btn';
+                backBtn.innerHTML = '← Powrót do Menu';
+                backBtn.className = 'fixed top-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-lg z-[200000] opacity-50 hover:opacity-100 transition-all';
+                backBtn.onclick = () => showSection('wykresy');
+                document.body.appendChild(backBtn);
+            } else {
+                document.getElementById('pbi-back-btn').style.display = 'block';
+            }
+        } else {
+            const backBtn = document.getElementById('pbi-back-btn');
+            if (backBtn) backBtn.style.display = 'none';
         }
 
         setTimeout(() => {
