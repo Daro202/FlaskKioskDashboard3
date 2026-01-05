@@ -37,6 +37,9 @@
         <div class="p-6">
             <h2 class="text-2xl font-bold text-orange-500 mb-8">Menu</h2>
             <nav>
+                <button onclick="showSection('powerbi')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="powerbi">
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg> Power BI</span>
+                </button>
                 <button onclick="showSection('wykresy')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="wykresy">
                     <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="14" width="3" height="8"/><rect x="7" y="10" width="3" height="12"/><rect x="12" y="6" width="3" height="16"/><rect x="17" y="2" width="3" height="20"/></svg> Wykresy</span>
                 </button>
@@ -76,6 +79,23 @@
         <!-- Sekcje treści -->
         <div class="flex-1 overflow-hidden relative">
             
+            <!-- Sekcja: Power BI -->
+            <section id="section-powerbi" class="content-section absolute inset-0 p-12 hidden">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden h-full flex flex-col">
+                    <h2 class="text-3xl font-bold text-gray-800 dark:text-white p-6 border-b border-gray-100 dark:border-gray-700">Raport Power BI</h2>
+                    <div class="flex-1">
+                        <iframe title="Nowy raport z MySQL v3"
+                                width="100%"
+                                height="100%"
+                                src="https://app.powerbi.com/reportEmbed?reportId=231840d0-8264-41ac-8ab0-25dc34d8aca2&autoAuth=true&ctid=75998ea3-790c-40ea-ac1e-02ee8edfb00f"
+                                frameborder="0"
+                                allowFullScreen="true"
+                                class="w-full h-full">
+                        </iframe>
+                    </div>
+                </div>
+            </section>
+
             <!-- Sekcja: Wykresy -->
             <section id="section-wykresy" class="content-section active absolute inset-0 p-12">
                 <div class="grid grid-cols-2 gap-8 h-full">

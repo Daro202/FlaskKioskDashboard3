@@ -115,7 +115,7 @@ function showSection(sectionName) {
 // ==================== AUTOMATYCZNA ROTACJA ====================
 
 function startAutoRotation() {
-    const sections = ['wykresy', 'inspiracje', 'zdjecia', 'o-nas'];
+    const sections = ['powerbi', 'wykresy', 'inspiracje', 'zdjecia', 'o-nas'];
     let currentIndex = 0;
     
     rotationInterval = setInterval(() => {
