@@ -105,13 +105,6 @@ function showSection(sectionName) {
     if (btn) {
         btn.classList.add('active');
     }
-}
-    
-    // Aktywuj przycisk
-    const btn = document.querySelector(`[data-section="${sectionName}"]`);
-    if (btn) {
-        btn.classList.add('active');
-    }
     
     currentSection = sectionName;
     
