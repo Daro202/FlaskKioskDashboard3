@@ -100,6 +100,17 @@ function showSection(sectionName) {
             const iframe = document.getElementById('pbi-iframe');
             if (iframe) {
                 iframe.style.pointerEvents = 'auto';
+                
+                // Dodaj przycisk awaryjny do otwierania w nowym oknie
+                const container = section.querySelector('.flex-1');
+                if (container && !document.getElementById('pbi-fallback-btn')) {
+                    const btn = document.createElement('button');
+                    btn.id = 'pbi-fallback-btn';
+                    btn.innerHTML = 'Otwórz raport w nowym oknie (jeśli logowanie nie działa)';
+                    btn.className = 'absolute bottom-4 left-1/2 -translate-x-1/2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl shadow-2xl z-[200000] font-bold transition-all';
+                    btn.onclick = () => window.open(iframe.src, '_blank');
+                    container.appendChild(btn);
+                }
             }
         }
 
