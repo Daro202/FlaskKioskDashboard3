@@ -10,7 +10,7 @@ import json
 import sqlite3
 import secrets
 import csv
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -31,6 +31,7 @@ else:
     print("⚠️  Przykład: export SESSION_SECRET=$(python -c 'import secrets; print(secrets.token_hex(32))')")
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max 16MB upload
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # Dozwolone rozszerzenia plików
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
@@ -392,6 +393,7 @@ def admin():
         # Sprawdź PIN
         pin = request.form.get('pin')
         if pin == config['admin_pin']:
+            session.permanent = True
             session['authenticated'] = True
             return redirect(url_for('admin'))
         else:
