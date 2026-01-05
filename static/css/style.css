@@ -43,11 +43,12 @@ body {
 .content-section {
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
-    pointer-events: none;
+    visibility: hidden; /* Ukryj całkowicie, aby nie blokowały interakcji */
 }
 
 .content-section.active {
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
 }
 
