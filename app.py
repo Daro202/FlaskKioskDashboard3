@@ -273,7 +273,7 @@ def load_long():
     """
     Wczytaj dane z pliku Export.xlsx i przekształć do formy długiej (long format)
     Format: Typ, Kod, Nazwa, Brygada, Dzien (1-31), Wartosc
-    POPRAWKA BŁĘDU DNIA 1: Poprawna obsługa plików z i bez kolumny 'Nazwa'
+    POPRAWKA: Usunięcie przesunięcia danych o jedną kolumnę.
     """
     try:
         # Wczytaj dane z Export.xlsx - próbuj różnych nazw arkuszy
@@ -286,68 +286,72 @@ def load_long():
                 try:
                     df = pd.read_excel('Export.xlsx', sheet_name='Arkusz1', engine='openpyxl', header=None)
                 except ValueError:
-                    # Jeśli żadna nazwa nie pasuje, wczytaj pierwszy arkusz
                     df = pd.read_excel('Export.xlsx', sheet_name=0, engine='openpyxl', header=None)
         
-        # Sprawdź czy plik ma kolumnę Nazwa (4 kolumny przed dniami) czy nie (3 kolumny przed dniami)
-        # Sprawdzamy czy 4ta kolumna (indeks 3) to liczba czy tekst
-        if len(df.columns) >= 4:
-            sample_val = df.iloc[0, 3]
-            try:
-                # Jeśli można skonwertować na float lub to jest liczba, to nie ma kolumny Nazwa
-                if pd.notna(sample_val) and (isinstance(sample_val, (int, float)) or str(sample_val).replace('.', '').isdigit()):
-                    # Format: Typ, Kod, Brygada, [dni...]
-                    df.columns = ['Typ', 'Kod', 'Brygada'] + list(df.columns[3:])
-                    df['Nazwa'] = ''
-                    first_day_col_index = 3
-                else:
-                    # Format: Typ, Kod, Nazwa, Brygada, [dni...]
-                    df.columns = ['Typ', 'Kod', 'Nazwa', 'Brygada'] + list(df.columns[4:])
-                    first_day_col_index = 4
-            except:
-                # Domyślnie zakładamy brak kolumny Nazwa
-                df.columns = ['Typ', 'Kod', 'Brygada'] + list(df.columns[3:])
-                df['Nazwa'] = ''
-                first_day_col_index = 3
+        # Sprawdź strukturę (Typ, Kod, Nazwa, Brygada, 1, 2, 3...)
+        # Jeśli 5-ta kolumna (indeks 4) to "1" lub nagłówek dnia, to mamy 4 kolumny ID
+        # Jeśli 4-ta kolumna (indeks 3) to "1", to mamy 3 kolumny ID (brak Nazwy)
+        
+        # Próbujemy wykryć kolumnę z pierwszym dniem (szukamy wartości 1)
+        first_day_col_index = -1
+        for i in range(len(df.columns)):
+            val = df.iloc[0, i]
+            if str(val) == '1' or str(val) == '1.0':
+                first_day_col_index = i
+                break
+        
+        if first_day_col_index == -1:
+            # Fallback: szukaj w drugim rzędzie jeśli pierwszy to nagłówki
+            for i in range(len(df.columns)):
+                val = df.iloc[1, i]
+                if str(val) == '1' or str(val) == '1.0':
+                    first_day_col_index = i
+                    # Jeśli dane zaczynają się od drugiego rzędu, przesuń df
+                    df.columns = df.iloc[0]
+                    df = df.iloc[1:].reset_index(drop=True)
+                    break
+
+        if first_day_col_index == 4:
+            # Typ, Kod, Nazwa, Brygada, 1, 2...
+            id_vars_names = ['Typ', 'Kod', 'Nazwa', 'Brygada']
+            df.columns = id_vars_names + [str(c) for c in df.columns[4:]]
+        elif first_day_col_index == 3:
+            # Typ, Kod, Brygada, 1, 2...
+            id_vars_names = ['Typ', 'Kod', 'Brygada']
+            df.columns = id_vars_names + [str(c) for c in df.columns[3:]]
+            df['Nazwa'] = ''
         else:
-            # Za mało kolumn - coś jest nie tak
-            raise ValueError("Plik Excel ma nieprawidłową strukturę")
-            
+            # Drastyczny fallback jeśli nie znaleziono "1"
+            if len(df.columns) > 35: # Zakładamy 4 id + 31 dni
+                id_vars_names = ['Typ', 'Kod', 'Nazwa', 'Brygada']
+                first_day_col_index = 4
+            else:
+                id_vars_names = ['Typ', 'Kod', 'Brygada']
+                first_day_col_index = 3
+                df['Nazwa'] = ''
+            df.columns = id_vars_names + [str(c) for c in df.columns[first_day_col_index:]]
+
         id_vars = ['Typ', 'Kod', 'Nazwa', 'Brygada']
         
-        # Przekształć nagłówki dni (kolumny od first_day_col_index) na int
-        day_cols = []
-        for col in df.columns[first_day_col_index:]:
+        # Wybierz tylko kolumny z dniami 1-31
+        value_vars = []
+        for col in df.columns:
             try:
-                day_cols.append(int(col))
-            except (ValueError, TypeError):
-                pass
-        
-        # Wybierz tylko kolumny podstawowe + dni jako int
-        valid_cols = id_vars + [c for c in df.columns[first_day_col_index:] if c in day_cols or str(c).isdigit()]
-        df_safe = df[valid_cols].copy()
-        
-        # Zmień nazwy kolumn dni na int
-        col_rename = {}
-        for col in df_safe.columns[first_day_col_index:]:
-            try:
-                col_rename[col] = int(col)
-            except (ValueError, TypeError):
-                pass
-        df_safe.rename(columns=col_rename, inplace=True)
-        
-        # Przekształć do formy długiej (melt)
-        value_vars = [col for col in df_safe.columns if isinstance(col, int) and 1 <= col <= 31]
+                c_int = int(float(col))
+                if 1 <= c_int <= 31:
+                    value_vars.append(col)
+            except:
+                continue
         
         df_long = pd.melt(
-            df_safe,
+            df,
             id_vars=id_vars,
             value_vars=value_vars,
             var_name='Dzien',
             value_name='Wartosc'
         )
         
-        # Usuń wiersze z NaN w kolumnie Wartosc
+        df_long['Dzien'] = df_long['Dzien'].apply(lambda x: int(float(x)))
         df_long = df_long.dropna(subset=['Wartosc'])
         
         # Konwertuj typy
@@ -355,8 +359,7 @@ def load_long():
         df_long['Kod'] = df_long['Kod'].astype(str)
         df_long['Nazwa'] = df_long['Nazwa'].astype(str)
         df_long['Brygada'] = df_long['Brygada'].astype(str)
-        df_long['Dzien'] = df_long['Dzien'].astype(int)
-        df_long['Wartosc'] = df_long['Wartosc'].astype(float)
+        df_long['Wartosc'] = pd.to_numeric(df_long['Wartosc'], errors='coerce').fillna(0)
         
         print(f"✅ Dane z Export.xlsx wczytane poprawnie: {len(df_long)} wierszy.")
         return df_long
