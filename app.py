@@ -273,71 +273,41 @@ def load_long():
     """
     Wczytaj dane z pliku Export.xlsx i przekształć do formy długiej (long format)
     Format: Typ, Kod, Nazwa, Brygada, Dzien (1-31), Wartosc
-    POPRAWKA: Usunięcie przesunięcia danych o jedną kolumnę.
+    POPRAWKA: Dni miesiąca są w wierszu 1 od kolumny D (indeks 3).
     """
     try:
-        # Wczytaj dane z Export.xlsx - próbuj różnych nazw arkuszy
+        # Wczytaj dane z Export.xlsx - używamy header=0, bo dni są w pierwszym wierszu
         try:
-            df = pd.read_excel('Export.xlsx', sheet_name='Export', engine='openpyxl', header=None)
+            df = pd.read_excel('Export.xlsx', sheet_name='Export', engine='openpyxl')
         except ValueError:
             try:
-                df = pd.read_excel('Export.xlsx', sheet_name='Eksport', engine='openpyxl', header=None)
+                df = pd.read_excel('Export.xlsx', sheet_name='Eksport', engine='openpyxl')
             except ValueError:
                 try:
-                    df = pd.read_excel('Export.xlsx', sheet_name='Arkusz1', engine='openpyxl', header=None)
+                    df = pd.read_excel('Export.xlsx', sheet_name='Arkusz1', engine='openpyxl')
                 except ValueError:
-                    df = pd.read_excel('Export.xlsx', sheet_name=0, engine='openpyxl', header=None)
+                    df = pd.read_excel('Export.xlsx', sheet_name=0, engine='openpyxl')
         
-        # Sprawdź strukturę (Typ, Kod, Nazwa, Brygada, 1, 2, 3...)
-        # Jeśli 5-ta kolumna (indeks 4) to "1" lub nagłówek dnia, to mamy 4 kolumny ID
-        # Jeśli 4-ta kolumna (indeks 3) to "1", to mamy 3 kolumny ID (brak Nazwy)
+        # Oczekiwana struktura: 
+        # Kolumna A (0): Typ
+        # Kolumna B (1): Kod
+        # Kolumna C (2): Brygada (lub Nazwa, sprawdzimy)
+        # Kolumny D-AH (3-33): Dni 1-31
         
-        # Próbujemy wykryć kolumnę z pierwszym dniem (szukamy wartości 1)
-        first_day_col_index = -1
-        for i in range(len(df.columns)):
-            val = df.iloc[0, i]
-            if str(val) == '1' or str(val) == '1.0':
-                first_day_col_index = i
-                break
+        # Mapowanie kolumn bazowych
+        base_cols = df.columns[:3].tolist()
+        df.columns = ['Typ', 'Kod', 'Brygada'] + [str(c) for c in df.columns[3:]]
+        df['Nazwa'] = '' # Dodajemy pustą nazwę dla spójności
         
-        if first_day_col_index == -1:
-            # Fallback: szukaj w drugim rzędzie jeśli pierwszy to nagłówki
-            for i in range(len(df.columns)):
-                val = df.iloc[1, i]
-                if str(val) == '1' or str(val) == '1.0':
-                    first_day_col_index = i
-                    # Jeśli dane zaczynają się od drugiego rzędu, przesuń df
-                    df.columns = df.iloc[0]
-                    df = df.iloc[1:].reset_index(drop=True)
-                    break
-
-        if first_day_col_index == 4:
-            # Typ, Kod, Nazwa, Brygada, 1, 2...
-            id_vars_names = ['Typ', 'Kod', 'Nazwa', 'Brygada']
-            df.columns = id_vars_names + [str(c) for c in df.columns[4:]]
-        elif first_day_col_index == 3:
-            # Typ, Kod, Brygada, 1, 2...
-            id_vars_names = ['Typ', 'Kod', 'Brygada']
-            df.columns = id_vars_names + [str(c) for c in df.columns[3:]]
-            df['Nazwa'] = ''
-        else:
-            # Drastyczny fallback jeśli nie znaleziono "1"
-            if len(df.columns) > 35: # Zakładamy 4 id + 31 dni
-                id_vars_names = ['Typ', 'Kod', 'Nazwa', 'Brygada']
-                first_day_col_index = 4
-            else:
-                id_vars_names = ['Typ', 'Kod', 'Brygada']
-                first_day_col_index = 3
-                df['Nazwa'] = ''
-            df.columns = id_vars_names + [str(c) for c in df.columns[first_day_col_index:]]
-
         id_vars = ['Typ', 'Kod', 'Nazwa', 'Brygada']
         
-        # Wybierz tylko kolumny z dniami 1-31
+        # Wybierz tylko kolumny, które są numerami dni 1-31
         value_vars = []
-        for col in df.columns:
+        for col in df.columns[3:]:
             try:
-                c_int = int(float(col))
+                # Czyścimy nazwę kolumny (może być "1.0" lub "1")
+                c_clean = str(col).split('.')[0]
+                c_int = int(c_clean)
                 if 1 <= c_int <= 31:
                     value_vars.append(col)
             except:
@@ -351,7 +321,8 @@ def load_long():
             value_name='Wartosc'
         )
         
-        df_long['Dzien'] = df_long['Dzien'].apply(lambda x: int(float(x)))
+        # Konwertujemy Dzień na czysty int
+        df_long['Dzien'] = df_long['Dzien'].apply(lambda x: int(str(x).split('.')[0]))
         df_long = df_long.dropna(subset=['Wartosc'])
         
         # Konwertuj typy
@@ -361,7 +332,7 @@ def load_long():
         df_long['Brygada'] = df_long['Brygada'].astype(str)
         df_long['Wartosc'] = pd.to_numeric(df_long['Wartosc'], errors='coerce').fillna(0)
         
-        print(f"✅ Dane z Export.xlsx wczytane poprawnie: {len(df_long)} wierszy.")
+        print(f"✅ Dane z Export.xlsx wczytane poprawnie (Dni od kolumny D): {len(df_long)} wierszy.")
         return df_long
     
     except FileNotFoundError:
