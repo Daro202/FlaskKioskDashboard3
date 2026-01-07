@@ -493,23 +493,31 @@ def upload_excel():
         return jsonify({'error': 'Brak autoryzacji'}), 401
     
     if 'excel_file' not in request.files:
-        return jsonify({'error': 'Brak pliku'}), 400
+        return jsonify({'error': 'Brak pliku w żądaniu'}), 400
     
     file = request.files['excel_file']
-    if file.filename == '' or file.filename is None:
+    if file.filename == '':
         return jsonify({'error': 'Nie wybrano pliku'}), 400
     
     # Sprawdź czy to plik Excel
-    if file and file.filename and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
-        # Zapisz jako Export.xlsx (zastąp istniejący)
-        filepath = 'Export.xlsx'
-        file.save(filepath)
-        
-        return jsonify({
-            'success': True,
-            'message': 'Plik Export.xlsx został zaktualizowany',
-            'filename': 'Export.xlsx'
-        })
+    if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+        try:
+            # Zapisz jako Export.xlsx (zastąp istniejący)
+            filepath = 'Export.xlsx'
+            file.save(filepath)
+            
+            # Wymuś przeładowanie danych, aby sprawdzić czy plik jest czytelny
+            df_check = load_long()
+            if df_check.empty:
+                 return jsonify({'error': 'Plik został zapisany, ale wydaje się pusty lub ma nieprawidłową strukturę.'}), 200
+            
+            return jsonify({
+                'success': True,
+                'message': f'Plik Export.xlsx został zaktualizowany ({len(df_check)} wierszy)',
+                'filename': 'Export.xlsx'
+            })
+        except Exception as e:
+            return jsonify({'error': f'Błąd podczas zapisywania pliku: {str(e)}'}), 500
     
     return jsonify({'error': 'Niedozwolony typ pliku - wymagany plik .xlsx lub .xls'}), 400
 
