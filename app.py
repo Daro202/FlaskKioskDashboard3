@@ -378,16 +378,19 @@ def admin():
         return render_template('admin.html', authenticated=False)
     
     # Użytkownik zalogowany - pokaż panel
-    header_title = get_setting('header_title')
-    footer_note = get_setting('footer_note')
-    about_text = get_setting('about_text')
-    inspirations = get_inspirations()
+    conn = sqlite3.connect('kiosk.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    settings = c.execute('SELECT key, value FROM settings').fetchall()
+    settings_dict = {row[0]: row[1] for row in settings}
+    inspirations = c.execute('SELECT id, title, description, image_url FROM inspirations ORDER BY created_at DESC').fetchall()
+    conn.close()
     
     return render_template('admin.html',
                          authenticated=True,
-                         header_title=header_title,
-                         footer_note=footer_note,
-                         about_text=about_text,
+                         header_title=settings_dict.get('header_title', ''),
+                         footer_note=settings_dict.get('footer_note', ''),
+                         about_text=settings_dict.get('about_text', ''),
                          inspirations=inspirations)
 
 @app.route('/admin/logout')
