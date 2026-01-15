@@ -19,19 +19,14 @@ from waitress import serve
 # Konfiguracja aplikacji Flask
 app = Flask(__name__)
 
-# Bezpieczny sekret sesji - WYMAGANE dla produkcji
-if 'SESSION_SECRET' in os.environ:
-    app.secret_key = os.environ['SESSION_SECRET']
-else:
-    # Generuj bezpieczny losowy klucz dla developmentu
-    # W produkcji ZAWSZE ustaw zmienną środowiskową SESSION_SECRET
-    app.secret_key = secrets.token_hex(32)
-    print("⚠️  UWAGA: Używany jest tymczasowy klucz sesji!")
-    print("⚠️  W produkcji ustaw zmienną środowiskową SESSION_SECRET")
-    print("⚠️  Przykład: export SESSION_SECRET=$(python -c 'import secrets; print(secrets.token_hex(32))')")
+# Stały klucz sesji dla zachowania ciągłości po restarcie serwera
+app.secret_key = "stora-enso-kiosk-permanent-secret-key-2025"
+app.config['SESSION_COOKIE_NAME'] = 'kiosk_session'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 app.config['UPLOAD_FOLDER'] = 'static/images'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max 16MB upload
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # Dozwolone rozszerzenia plików
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}

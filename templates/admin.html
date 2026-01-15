@@ -469,7 +469,9 @@
                     showSuccess();
                     document.getElementById('excel-upload-preview').classList.add('hidden');
                     fileInput.value = '';
-                    alert('Plik Export.xlsx został zaktualizowany! Wykresy będą używać nowych danych.');
+                    setTimeout(() => {
+                        alert('Plik Export.xlsx został zaktualizowany! Wykresy będą używać nowych danych.');
+                    }, 500);
                 } else {
                     alert('Błąd: ' + (result.error || 'Nie udało się wczytać pliku Excel. Sprawdź czy format jest poprawny.'));
                 }
