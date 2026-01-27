@@ -1099,16 +1099,25 @@ def get_jumbo_data():
         unique_days_str = [d.strftime('%d.%m.%Y') for d in pd.to_datetime(unique_days)]
         
         for segment in segments:
-            seg_df = df[df[segment_col] == segment].groupby('Dzien_Str').agg({
+            seg_df = df[df[segment_col] == segment].copy()
+            if seg_df.empty:
+                continue
+            
+            # Grupowanie po dniach i sumowanie/maksimum
+            # Najpierw konwertujemy kolumny na liczbowe, aby uniknąć błędów przy agregacji
+            seg_df[daily_col] = pd.to_numeric(seg_df[daily_col], errors='coerce').fillna(0)
+            seg_df[cum_col] = pd.to_numeric(seg_df[cum_col], errors='coerce').fillna(0)
+            
+            grouped = seg_df.groupby('Dzien_Str').agg({
                 daily_col: 'sum',
-                cum_col: 'sum'
+                cum_col: 'max'
             }).reset_index()
             
             # Mapowanie do pełnej listy dni aby nie było dziur
             seg_data_daily = []
             seg_data_cum = []
             for d_str in unique_days_str:
-                row = seg_df[seg_df['Dzien_Str'] == d_str]
+                row = grouped[grouped['Dzien_Str'] == d_str]
                 seg_data_daily.append(float(row[daily_col].iloc[0]) if not row.empty else 0)
                 seg_data_cum.append(float(row[cum_col].iloc[0]) if not row.empty else 0)
 
@@ -1121,7 +1130,7 @@ def get_jumbo_data():
                     'color': kolory_slupki.get(segment, '#999999')
                 })
                 series_data.append({
-                    'type': 'bar',
+                    'type': 'line',
                     'name': f'{segment} - Narastająca',
                     'x': unique_days_str,
                     'y': [round(v, 0) for v in seg_data_cum],
