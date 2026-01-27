@@ -1062,17 +1062,19 @@ def get_jumbo_data():
         # Szukamy kolumn zawierających datę i odpowiednie słowa kluczowe
         cols = df.columns.tolist()
         date_col = next((c for c in cols if 'date' in c.lower() or 'data' in c.lower() or 'dzien' in c.lower()), None)
-        daily_col = next((c for c in cols if 'speed' in c.lower() and 'cum' not in c.lower()), None)
-        cum_col = next((c for c in cols if 'cum_speed' in c.lower() or 'narast' in c.lower()), None)
+        # Produkcja dzienna [m2 ] lub Speed
+        daily_col = next((c for c in cols if ('speed' in c.lower() or 'produkcja dzienna' in c.lower()) and 'cum' not in c.lower() and 'narast' not in c.lower()), None)
+        # Narastająca produkcja [m2] lub Cum_Speed
+        cum_col = next((c for c in cols if 'cum_speed' in c.lower() or 'narast' in c.lower() or 'produkcja narast' in c.lower()), None)
         segment_col = next((c for c in cols if 'segment' in c.lower()), None)
         brygada_col = next((c for c in cols if 'brygada' in c.lower() or 'shift' in c.lower()), None)
 
         if not all([date_col, daily_col, cum_col, segment_col, brygada_col]):
             print(f"❌ Nie znaleziono wszystkich kolumn w Jumbo.xlsx. Znalezione: {date_col}, {daily_col}, {cum_col}, {segment_col}, {brygada_col}")
-            # Fallback na sztywne nazwy ze zdjęcia jeśli auto-detekcja zawiedzie
+            # Fallback na konkretne nazwy z logów jeśli auto-detekcja zawiedzie
             date_col = date_col or 'mtf_report_date'
-            daily_col = daily_col or 'Speed_m2_wh'
-            cum_col = cum_col or 'Cum_Speed_m2_wh'
+            daily_col = daily_col or next((c for c in cols if 'Produkcja dzienna' in c), 'Speed_m2_wh')
+            cum_col = cum_col or next((c for c in cols if 'Narastająca produkcja' in c), 'Cum_Speed_m2_wh')
             segment_col = segment_col or 'Segment'
             brygada_col = brygada_col or 'Brygada'
 
