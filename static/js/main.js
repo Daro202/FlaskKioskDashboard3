@@ -530,7 +530,12 @@ function createPerformanceChart(data) {
                     display: true,
                     position: 'left', 
                     beginAtZero: true,
-                    ticks: { color: textColor, font: { size: 12 } }, 
+                    suggestedMax: 10000, // Zapewnia odpowiednią wysokość słupków
+                    ticks: { 
+                        color: textColor, 
+                        font: { size: 12 },
+                        callback: function(value) { return value.toLocaleString(); }
+                    }, 
                     grid: { color: gridColor },
                     title: { display: true, text: 'm2/wh (Dzienna)', color: textColor, font: { size: 14 } }
                 },
@@ -539,7 +544,12 @@ function createPerformanceChart(data) {
                     display: true,
                     position: 'right', 
                     beginAtZero: true,
-                    ticks: { color: textColor, font: { size: 12 } }, 
+                    suggestedMax: 10000, // Analogiczna skala dla czytelności wizualnej
+                    ticks: { 
+                        color: textColor, 
+                        font: { size: 12 },
+                        callback: function(value) { return value.toLocaleString(); }
+                    }, 
                     grid: { drawOnChartArea: false },
                     title: { display: true, text: 'm2/wh (Narastająca)', color: textColor, font: { size: 14 } }
                 },
