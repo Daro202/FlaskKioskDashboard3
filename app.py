@@ -1148,7 +1148,8 @@ def get_jumbo_data():
         kolory_narastajace = {'Amazon': '#FF6B35', 'Reszta': '#38bdf8'}
         
         for segment in segments:
-            seg_df = df[df[seg_col] == segment].copy()
+            # KLUCZOWE: Filtrowanie dokładnie po segmencie i brygadzie - każdy segment ma własny wiersz
+            seg_df = df[(df[seg_col] == segment) & (df[brygada_col] == brigade)].copy()
             if seg_df.empty:
                 continue
             
@@ -1156,22 +1157,23 @@ def get_jumbo_data():
             seg_df[speed_col] = pd.to_numeric(seg_df[speed_col], errors='coerce').fillna(0)
             seg_df[cum_col] = pd.to_numeric(seg_df[cum_col], errors='coerce').fillna(0)
             
-            # Grupowanie po dniu (jeśli jest wiele rekordów dla tego samego segmentu/brygady w jednym dniu)
-            # Dla prędkości dziennej: SUM (agregacja rekordów z tego samego dnia)
-            # Dla prędkości narastającej: LAST (wartość narastająca z ostatniego rekordu w danym dniu)
+            # Sortowanie chronologiczne
             seg_df = seg_df.sort_values(date_col)
             seg_df['Dzien_Str'] = seg_df[date_col].dt.strftime('%d.%m.%Y')
             
+            # Grupowanie po dniu dla wybranego segmentu i brygady
+            # Prędkość dzienna: suma (jeśli występuje podział w ramach dnia)
+            # Prędkość narastająca: ostatnia wartość z wiersza (już skumulowana w Excelu)
             grouped = seg_df.groupby('Dzien_Str').agg({
                 speed_col: 'sum',
                 cum_col: 'last'
             }).reset_index()
             
-            # Sortujemy zgrupowane dane według daty
+            # Sortowanie wyników przed mapowaniem na oś X
             grouped['SortDate'] = pd.to_datetime(grouped['Dzien_Str'], format='%d.%m.%Y')
             grouped = grouped.sort_values('SortDate')
             
-            # Mapowanie do pełnej listy dni zakresu (zapewnienie ciągłości osi X)
+            # Mapowanie na osi X (14 dni)
             seg_data_daily = []
             seg_data_cum = []
             for d_str in unique_days_str:
