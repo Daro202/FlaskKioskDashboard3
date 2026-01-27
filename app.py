@@ -428,6 +428,9 @@ def admin():
     
     # Użytkownik zalogowany - pokaż panel
     try:
+        # AUTOMATYCZNA NAPRAWA BAZY (Dla serwerów bez nowej tabeli)
+        init_db()
+        
         conn = sqlite3.connect('kiosk.db')
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
@@ -996,6 +999,9 @@ if __name__ == '__main__':
     
     # Utwórz folder na zdjęcia jeśli nie istnieje
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    
+    # Wymuś inicjalizację bazy przy starcie (dodatkowe zabezpieczenie)
+    init_db()
     
     # Uruchom serwer produkcyjny Waitress
     print("=" * 60)
