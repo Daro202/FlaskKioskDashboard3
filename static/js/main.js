@@ -470,59 +470,97 @@ function updateChartsTheme(isDark) {
 let currentPerformanceSegments = ['Amazon', 'Reszta'];
 let currentPerformanceBrygada = 'All';
 
-async function loadPerformanceData() {
-    const segmentsQuery = currentPerformanceSegments.map(s => `segments[]=${encodeURIComponent(s)}`).join('&');
-    try {
-        const response = await fetch(`/api/jumbo-data?${segmentsQuery}&brygada=${currentPerformanceBrygada}`);
-        const data = await response.json();
-        createPerformanceChart(data.series);
-    } catch (error) {
-        console.error('Błąd ładowania wydajności:', error);
-    }
-}
-
-function createPerformanceChart(series) {
+function createPerformanceChart(data) {
     const ctx = document.getElementById('performanceChart');
     if (!ctx) return;
     if (charts.performance) charts.performance.destroy();
 
-    if (!series || series.length === 0) {
+    if (!data || !data.series || data.series.length === 0) {
         console.warn('Brak danych dla wykresu wydajności');
         return;
     }
-
-    const allLabels = series[0].x;
-    const datasets = series.map(s => ({
-        label: s.name,
-        data: s.y,
-        backgroundColor: s.color,
-        borderColor: s.color,
-        borderWidth: 1
-    }));
 
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
+    const datasets = data.series.map(s => {
+        const isLine = s.type === 'line';
+        return {
+            label: s.name,
+            data: s.data,
+            type: isLine ? 'line' : 'bar',
+            backgroundColor: isLine ? 'transparent' : s.color + 'CC',
+            borderColor: s.color,
+            borderWidth: isLine ? 3 : 1,
+            yAxisID: s.yaxis === 'y2' ? 'y2' : 'y',
+            tension: 0.3,
+            pointRadius: isLine ? 4 : 0,
+            pointBackgroundColor: s.color
+        };
+    });
+
     charts.performance = new Chart(ctx, {
         type: 'bar',
-        data: { labels: allLabels, datasets },
+        data: { 
+            labels: data.days, 
+            datasets: datasets 
+        },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             plugins: {
-                legend: { display: true, position: 'bottom', labels: { color: textColor, font: { size: 16 } } }
+                legend: { 
+                    display: true, 
+                    position: 'bottom', 
+                    labels: { color: textColor, font: { size: 14 } } 
+                },
+                tooltip: {
+                    shared: true,
+                    intersect: false
+                }
             },
             scales: {
                 y: {
-                    type: 'linear', position: 'left', beginAtZero: true,
-                    ticks: { color: textColor, font: { size: 14 } }, grid: { color: gridColor },
-                    title: { display: true, text: 'm2/wh', color: textColor, font: { size: 16 } }
+                    type: 'linear', 
+                    display: true,
+                    position: 'left', 
+                    beginAtZero: true,
+                    ticks: { color: textColor, font: { size: 12 } }, 
+                    grid: { color: gridColor },
+                    title: { display: true, text: 'm2/wh (Dzienna)', color: textColor, font: { size: 14 } }
                 },
-                x: { ticks: { color: textColor, font: { size: 14 } }, grid: { display: false } }
+                y2: {
+                    type: 'linear', 
+                    display: true,
+                    position: 'right', 
+                    beginAtZero: true,
+                    ticks: { color: textColor, font: { size: 12 } }, 
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'm2/wh (Narastająca)', color: textColor, font: { size: 14 } }
+                },
+                x: { 
+                    ticks: { color: textColor, font: { size: 12 } }, 
+                    grid: { display: false } 
+                }
             }
         }
     });
+}
+
+async function loadPerformanceData() {
+    const segmentsQuery = currentPerformanceSegments.map(s => `segments[]=${encodeURIComponent(s)}`).join('&');
+    try {
+        const response = await fetch(`/api/jumbo-data?${segmentsQuery}&brygada=${currentPerformanceBrygada}`);
+        const data = await response.json();
+        createPerformanceChart(data);
+    } catch (error) {
+        console.error('Błąd ładowania wydajności:', error);
+    }
 }
 
 // Inicjalizacja filtrów wydajności
