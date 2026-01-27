@@ -427,23 +427,37 @@ def admin():
         return render_template('admin.html', authenticated=False)
     
     # Użytkownik zalogowany - pokaż panel
-    conn = sqlite3.connect('kiosk.db')
-    conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    settings = c.execute('SELECT key, value FROM settings').fetchall()
-    settings_dict = {row[0]: row[1] for row in settings}
-    inspirations = c.execute('SELECT id, title, description, image_url FROM inspirations ORDER BY created_at DESC').fetchall()
-    pages_rows = c.execute('SELECT page_id, title, is_visible FROM page_visibility').fetchall()
-    pages = [dict(row) for row in pages_rows]
-    conn.close()
-    
-    return render_template('admin.html',
-                         authenticated=True,
-                         header_title=settings_dict.get('header_title', ''),
-                         footer_note=settings_dict.get('footer_note', ''),
-                         about_text=settings_dict.get('about_text', ''),
-                         inspirations=inspirations,
-                         pages=pages)
+    try:
+        conn = sqlite3.connect('kiosk.db')
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        
+        # Pobierz ustawienia
+        settings_rows = c.execute('SELECT key, value FROM settings').fetchall()
+        settings_dict = {row['key']: row['value'] for row in settings_rows}
+        
+        # Pobierz inspiracje
+        inspirations_rows = c.execute('SELECT id, title, description, image_url FROM inspirations ORDER BY created_at DESC').fetchall()
+        inspirations = [dict(row) for row in inspirations_rows]
+        
+        # Pobierz widoczność stron
+        pages_rows = c.execute('SELECT page_id, title, is_visible FROM page_visibility').fetchall()
+        pages = [dict(row) for row in pages_rows]
+        
+        conn.close()
+        
+        return render_template('admin.html',
+                             authenticated=True,
+                             header_title=settings_dict.get('header_title', ''),
+                             footer_note=settings_dict.get('footer_note', ''),
+                             about_text=settings_dict.get('about_text', ''),
+                             inspirations=inspirations,
+                             pages=pages)
+    except Exception as e:
+        print(f"BŁĄD W ADMIN: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return f"Wystąpił błąd podczas ładowania panelu admina: {str(e)}", 500
 
 @app.route('/admin/logout')
 def admin_logout():
