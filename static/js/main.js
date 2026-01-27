@@ -497,14 +497,13 @@ function createPerformanceChart(series) {
         const data = Array.from(allDays).sort((a, b) => a - b).map(day => dataMap[day] || 0);
         
         datasets.push({
-            type: s.type,
+            type: 'bar',
             label: s.name,
             data: data,
-            backgroundColor: s.type === 'bar' ? s.color + 'CC' : 'transparent',
+            backgroundColor: s.color,
             borderColor: s.color,
-            borderWidth: s.type === 'line' ? 3 : 1,
-            tension: 0.3,
-            yAxisID: s.type === 'line' ? 'y2' : 'y'
+            borderWidth: 1,
+            yAxisID: 'y'
         });
     });
 
@@ -525,12 +524,7 @@ function createPerformanceChart(series) {
                 y: {
                     type: 'linear', position: 'left', beginAtZero: true,
                     ticks: { color: textColor, font: { size: 14 } }, grid: { color: gridColor },
-                    title: { display: true, text: 'm2/wh (Dziennie)', color: textColor, font: { size: 16 } }
-                },
-                y2: {
-                    type: 'linear', position: 'right', beginAtZero: true,
-                    ticks: { color: textColor, font: { size: 14 } }, grid: { drawOnChartArea: false },
-                    title: { display: true, text: 'm2/wh (Narastająco)', color: textColor, font: { size: 16 } }
+                    title: { display: true, text: 'm2/wh', color: textColor, font: { size: 16 } }
                 },
                 x: { ticks: { color: textColor, font: { size: 14 } }, grid: { display: false } }
             }

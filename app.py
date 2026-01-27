@@ -1049,7 +1049,8 @@ def get_jumbo_data():
         # Jeśli kolumny są inne (np. Dzień w nagłówkach), trzeba użyć melt.
         
         series_data = []
-        kolory = {'Amazon': '#FF6B35', 'Reszta': '#004E89'}
+        kolory_slupki = {'Amazon': '#004E89', 'Reszta': '#15803d'} # Ciemny niebieski i zielony
+        kolory_narastajace = {'Amazon': '#f97316', 'Reszta': '#38bdf8'} # Pomarańczowy i błękitny
         
         for segment in segments:
             seg_df = df[df['Segment'] == segment].groupby('Dzien').agg({
@@ -1064,15 +1065,15 @@ def get_jumbo_data():
                     'name': f'{segment} - Dzienna',
                     'x': seg_df['Dzien'].tolist(),
                     'y': [round(v, 0) for v in seg_df['Wartosc_Dzienna'].tolist()],
-                    'color': kolory.get(segment, '#999999')
+                    'color': kolory_slupki.get(segment, '#999999')
                 })
-                # Linie narastające
+                # Słupki narastające (zmienione z line na bar)
                 series_data.append({
-                    'type': 'line',
+                    'type': 'bar',
                     'name': f'{segment} - Narastająca',
                     'x': seg_df['Dzien'].tolist(),
                     'y': [round(v, 0) for v in seg_df['Wartosc_Narastajaca'].tolist()],
-                    'color': kolory.get(segment, '#999999')
+                    'color': kolory_narastajace.get(segment, '#cccccc')
                 })
                 
         return jsonify({'series': series_data})
