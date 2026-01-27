@@ -1078,8 +1078,11 @@ def get_jumbo_data():
         # Usuwamy tylko wiersze bez daty
         df = df.dropna(subset=["Dzień"])
         
-        # 2. Filtrowanie: TYLKO wiersze Brygada == "All"
-        filtered = df[(df["Segment"].isin(segments_selected)) & (df["Brygada"] == "All")]
+        # 2. Filtrowanie: Respektujemy wybór brygady z dropdownu
+        # Jeśli brygada == "All", używamy tylko wierszy z Brygada == "All"
+        # Jeśli brygada != "All", używamy tylko wierszy konkretnej brygady (A, B lub C)
+        brygada_selected = request.args.get('brygada', 'All')
+        filtered = df[(df["Segment"].isin(segments_selected)) & (df["Brygada"] == brygada_selected)]
         
         # 3. Sortowanie
         filtered = filtered.sort_values("Dzień")
