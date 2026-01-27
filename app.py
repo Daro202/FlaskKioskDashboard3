@@ -364,14 +364,33 @@ def load_long():
 @app.route('/')
 def index():
     """Strona główna - Dashboard"""
-    header_title = get_setting('header_title')
-    footer_note = get_setting('footer_note')
-    inspirations = get_inspirations()
+    conn = sqlite3.connect('kiosk.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    
+    # Pobierz ustawienia
+    settings_rows = c.execute('SELECT key, value FROM settings').fetchall()
+    settings_dict = {row['key']: row['value'] for row in settings_rows}
+    
+    # Pobierz inspiracje
+    inspirations_rows = c.execute('SELECT id, title, description, image_url FROM inspirations ORDER BY created_at DESC').fetchall()
+    inspirations = [dict(row) for row in inspirations_rows]
+    
+    # Pobierz widoczność stron
+    try:
+        visibility_rows = c.execute('SELECT page_id, is_visible FROM page_visibility').fetchall()
+        visibility = {row['page_id']: bool(row['is_visible']) for row in visibility_rows}
+    except:
+        visibility = {}
+    
+    conn.close()
     
     return render_template('index.html',
-                         header_title=header_title,
-                         footer_note=footer_note,
-                         inspirations=inspirations)
+                         header_title=settings_dict.get('header_title', 'Dashboard Inspiracji i Wyników'),
+                         footer_note=settings_dict.get('footer_note', 'Stora Enso'),
+                         about_text=settings_dict.get('about_text', ''),
+                         inspirations=inspirations,
+                         pages_visible=visibility)
 
 @app.context_processor
 def inject_page_visibility():

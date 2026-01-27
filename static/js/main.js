@@ -730,9 +730,20 @@ async function loadContent() {
             
             // Ukryj/pokaż przyciski w menu bocznym dynamicznie
             allPossible.forEach(s => {
-                const btn = document.querySelector(`.nav-btn[data-section="${s}"]`);
+                // Znajdź przyciski po atrybucie data-section lub href (dla quizu)
+                const btn = document.querySelector(`.nav-btn[data-section="${s}"]`) || 
+                            document.querySelector(`.nav-btn[href="/quiz"]`);
+                
                 if (btn) {
-                    btn.style.display = pagesVisible[s] === false ? 'none' : 'block';
+                    const sectionKey = (btn.getAttribute('href') === '/quiz' || btn.dataset.section === 'quiz') ? 'quiz' : s;
+                    
+                    if (pagesVisible[sectionKey] === false) {
+                        btn.classList.add('hidden');
+                        btn.style.display = 'none';
+                    } else {
+                        btn.classList.remove('hidden');
+                        btn.style.display = 'block';
+                    }
                 }
             });
 
