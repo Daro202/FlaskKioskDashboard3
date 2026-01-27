@@ -1117,7 +1117,7 @@ def get_jumbo_data():
         speed_col = col_map['Speed_m2_wh']
         cum_col = col_map['Cum_Speed_m2_wh']
         seg_col = col_map['Segment']
-        bryg_col = col_map['Brygada']
+        brygada_col = col_map['Brygada']
 
         # Czyszczenie i konwersja typów
         df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
@@ -1125,7 +1125,8 @@ def get_jumbo_data():
         
         # Filtrowanie brygady
         if brygada != 'All':
-            df = df[df[bryg_col].astype(str).str.contains(brygada, case=False, na=False)]
+            # Używamy brygada_col zamiast bryg_col i brigade
+            df = df[df[brygada_col].astype(str).str.contains(brygada, case=False, na=False)]
             
         # Filtrowanie segmentów
         if segments:
@@ -1148,8 +1149,12 @@ def get_jumbo_data():
         kolory_narastajace = {'Amazon': '#FF6B35', 'Reszta': '#38bdf8'}
         
         for segment in segments:
-            # KLUCZOWE: Filtrowanie dokładnie po segmencie i brygadzie - każdy segment ma własny wiersz
-            seg_df = df[(df[seg_col] == segment) & (df[brygada_col] == brigade)].copy()
+            # KLUCZOWE: Filtrowanie dokładnie po segmencie i brygadzie
+            # Używamy brygada jako wartości filtra (może być 'All', ale wtedy df jest już odpowiednio przefiltrowane)
+            if brygada != 'All':
+                seg_df = df[(df[seg_col] == segment) & (df[brygada_col].astype(str).str.contains(brygada, case=False, na=False))].copy()
+            else:
+                seg_df = df[df[seg_col] == segment].copy()
             if seg_df.empty:
                 continue
             
