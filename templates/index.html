@@ -42,7 +42,11 @@
                 </button>
 
                 <button onclick="showSection('wykresy')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="wykresy">
-                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="14" width="3" height="8"/><rect x="7" y="10" width="3" height="12"/><rect x="12" y="6" width="3" height="16"/><rect x="17" y="2" width="3" height="20"/></svg> Wykresy</span>
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="14" width="3" height="8"/><rect x="7" y="10" width="3" height="12"/><rect x="12" y="6" width="3" height="16"/><rect x="17" y="2" width="3" height="20"/></svg> Produkcja</span>
+                </button>
+
+                <button onclick="showSection('performance')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="performance">
+                    <span class="text-lg inline-flex items-center gap-2"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg> Wydajność</span>
                 </button>
                 
                 <button onclick="showSection('inspiracje')" class="nav-btn w-full text-left py-4 px-4 mb-2 rounded-lg transition-all hover:bg-orange-50 dark:hover:bg-gray-700" data-section="inspiracje">
@@ -132,7 +136,39 @@
                 </div>
             </section>
             
-            <!-- Sekcja: Inspiracje -->
+            <!-- Sekcja: Wydajność (Jumbo) -->
+            <section id="section-performance" class="content-section absolute inset-0 p-12 hidden">
+                <div class="h-full">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 h-full flex flex-col">
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-4xl font-bold text-gray-800 dark:text-white">Wydajność Produkcji</h2>
+                                <div class="flex gap-8 items-center">
+                                    <div class="flex gap-4 items-center bg-gray-100 dark:bg-gray-700 px-6 py-3 rounded-xl shadow-inner">
+                                        <label class="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" name="segment" value="Amazon" checked class="w-6 h-6 accent-orange-500">
+                                            <span class="text-xl font-medium dark:text-white">Amazon</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 cursor-pointer">
+                                            <input type="checkbox" name="segment" value="Reszta" checked class="w-6 h-6 accent-orange-500">
+                                            <span class="text-xl font-medium dark:text-white">Reszta</span>
+                                        </label>
+                                    </div>
+                                    <select id="performance-brygada" class="text-xl px-6 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 shadow-sm">
+                                        <option value="All">Wszystkie Brygady</option>
+                                        <option value="A">Brygada A</option>
+                                        <option value="B">Brygada B</option>
+                                        <option value="C">Brygada C</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-1 relative min-h-0">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
             <section id="section-inspiracje" class="content-section absolute inset-0 p-12 hidden">
                 <div id="inspirations-container" class="grid grid-cols-3 gap-8 h-full overflow-auto">
                     <!-- Karty inspiracji będą wstawiane dynamicznie -->

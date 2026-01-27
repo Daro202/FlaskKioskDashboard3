@@ -1012,6 +1012,74 @@ def api_series():
 
 # ==================== URUCHOMIENIE APLIKACJI ====================
 
+def load_jumbo():
+    """Wczytaj dane z pliku Jumbo.xlsx"""
+    try:
+        df = pd.read_excel('Jumbo.xlsx', engine='openpyxl')
+        # Oczekiwane kolumny: Segment (Amazon/Reszta), Brygada (A/B/C), Dzien (1-31), Wartosc_Dzienna, Wartosc_Narastajaca
+        # Jeśli struktura jest inna, będziemy musieli ją dopasować po analizie pliku.
+        # Zakładamy standardowy format long lub zbliżony do Export.xlsx
+        df.columns = [str(c).strip() for c in df.columns]
+        return df
+    except Exception as e:
+        print(f"Błąd wczytywania Jumbo.xlsx: {e}")
+        return pd.DataFrame()
+
+@app.route('/api/jumbo-data')
+def get_jumbo_data():
+    """API dla wykresu wydajności z Jumbo.xlsx"""
+    try:
+        segments = request.args.getlist('segments[]')
+        brygada = request.args.get('brygada', 'All')
+        
+        df = load_jumbo()
+        if df.empty:
+            return jsonify({'series': []})
+            
+        # Filtrowanie brygady
+        if brygada != 'All':
+            df = df[df['Brygada'] == brygada]
+            
+        # Filtrowanie segmentów
+        if segments:
+            df = df[df['Segment'].isin(segments)]
+            
+        # Agregacja per dzień i segment
+        # Zakładamy kolumny: 'Dzien', 'Segment', 'Wartosc_Dzienna', 'Wartosc_Narastajaca'
+        # Jeśli kolumny są inne (np. Dzień w nagłówkach), trzeba użyć melt.
+        
+        series_data = []
+        kolory = {'Amazon': '#FF6B35', 'Reszta': '#004E89'}
+        
+        for segment in segments:
+            seg_df = df[df['Segment'] == segment].groupby('Dzien').agg({
+                'Wartosc_Dzienna': 'sum',
+                'Wartosc_Narastajaca': 'sum'
+            }).reset_index().sort_values('Dzien')
+            
+            if not seg_df.empty:
+                # Słupki dzienne
+                series_data.append({
+                    'type': 'bar',
+                    'name': f'{segment} - Dzienna',
+                    'x': seg_df['Dzien'].tolist(),
+                    'y': [round(v, 0) for v in seg_df['Wartosc_Dzienna'].tolist()],
+                    'color': kolory.get(segment, '#999999')
+                })
+                # Linie narastające
+                series_data.append({
+                    'type': 'line',
+                    'name': f'{segment} - Narastająca',
+                    'x': seg_df['Dzien'].tolist(),
+                    'y': [round(v, 0) for v in seg_df['Wartosc_Narastajaca'].tolist()],
+                    'color': kolory.get(segment, '#999999')
+                })
+                
+        return jsonify({'series': series_data})
+    except Exception as e:
+        print(f"Błąd API jumbo: {e}")
+        return jsonify({'series': []})
+
 if __name__ == '__main__':
     # Inicjalizuj bazę danych
     init_db()

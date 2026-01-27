@@ -46,6 +46,7 @@ async function initializeApp() {
     await loadMachines();
     await loadInspirationsData();
     await loadSlidesData();
+    await loadPerformanceData();
     
     startAutoRotation();
     
@@ -466,7 +467,90 @@ function updateChartsTheme(isDark) {
     });
 }
 
-// ==================== AUTO-REFRESH ====================
+let currentPerformanceSegments = ['Amazon', 'Reszta'];
+let currentPerformanceBrygada = 'All';
+
+async function loadPerformanceData() {
+    const segmentsQuery = currentPerformanceSegments.map(s => `segments[]=${encodeURIComponent(s)}`).join('&');
+    try {
+        const response = await fetch(`/api/jumbo-data?${segmentsQuery}&brygada=${currentPerformanceBrygada}`);
+        const data = await response.json();
+        createPerformanceChart(data.series);
+    } catch (error) {
+        console.error('Błąd ładowania wydajności:', error);
+    }
+}
+
+function createPerformanceChart(series) {
+    const ctx = document.getElementById('performanceChart');
+    if (!ctx) return;
+    if (charts.performance) charts.performance.destroy();
+
+    const allDays = new Set();
+    series.forEach(s => s.x.forEach(day => allDays.add(day)));
+    const labels = Array.from(allDays).sort((a, b) => a - b).map(d => `Dzień ${d}`);
+    const datasets = [];
+
+    series.forEach(s => {
+        const dataMap = {};
+        s.x.forEach((day, i) => dataMap[day] = s.y[i]);
+        const data = Array.from(allDays).sort((a, b) => a - b).map(day => dataMap[day] || 0);
+        
+        datasets.push({
+            type: s.type,
+            label: s.name,
+            data: data,
+            backgroundColor: s.type === 'bar' ? s.color + 'CC' : 'transparent',
+            borderColor: s.color,
+            borderWidth: s.type === 'line' ? 3 : 1,
+            tension: 0.3,
+            yAxisID: s.type === 'line' ? 'y2' : 'y'
+        });
+    });
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#FFFFFF' : '#1F2937';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+
+    charts.performance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, position: 'bottom', labels: { color: textColor, font: { size: 16 } } }
+            },
+            scales: {
+                y: {
+                    type: 'linear', position: 'left', beginAtZero: true,
+                    ticks: { color: textColor, font: { size: 14 } }, grid: { color: gridColor },
+                    title: { display: true, text: 'm2/wh (Dziennie)', color: textColor, font: { size: 16 } }
+                },
+                y2: {
+                    type: 'linear', position: 'right', beginAtZero: true,
+                    ticks: { color: textColor, font: { size: 14 } }, grid: { drawOnChartArea: false },
+                    title: { display: true, text: 'm2/wh (Narastająco)', color: textColor, font: { size: 16 } }
+                },
+                x: { ticks: { color: textColor, font: { size: 14 } }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+// Inicjalizacja filtrów wydajności
+document.addEventListener('change', (e) => {
+    if (e.target.name === 'segment') {
+        const checked = Array.from(document.querySelectorAll('input[name="segment"]:checked')).map(cb => cb.value);
+        currentPerformanceSegments = checked;
+        loadPerformanceData();
+    }
+    if (e.target.id === 'performance-brygada') {
+        currentPerformanceBrygada = e.target.value;
+        loadPerformanceData();
+    }
+});
+
 
 async function loadContent() {
     try {
