@@ -587,6 +587,29 @@ def upload_file():
     
     return jsonify({'error': 'Niedozwolony typ pliku'}), 400
 
+@app.route('/api/upload-jumbo', methods=['POST'])
+def upload_jumbo_file():
+    """Upload pliku Excel (Jumbo.xlsx)"""
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Brak autoryzacji'}), 401
+    
+    if 'excel_file' not in request.files:
+        return jsonify({'error': 'Brak pliku w żądaniu'}), 400
+    
+    file = request.files['excel_file']
+    if file.filename == '':
+        return jsonify({'error': 'Nie wybrano pliku'}), 400
+    
+    if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+        try:
+            filepath = 'Jumbo.xlsx'
+            file.save(filepath)
+            return jsonify({'success': True})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({'error': 'Niedozwolony typ pliku (tylko .xlsx)'}), 400
+
 @app.route('/api/upload-excel', methods=['POST'])
 def upload_excel():
     """Upload pliku Excel (Export.xlsx)"""
