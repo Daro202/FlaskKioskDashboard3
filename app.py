@@ -1080,12 +1080,12 @@ def get_jumbo_data():
             # Jeśli nie znaleziono, spróbuj znaleźć po fragmentach dla kolumn prędkości
             if not found:
                 if 'speed' in tech.lower() and 'cum' not in tech.lower():
-                    found = next((c for c in cols if 'speed' in c.lower() and 'cum' not in c.lower()), None)
+                    found = next((c for c in cols if 'prędkość dzienna' in c.lower() or ('speed' in c.lower() and 'cum' not in c.lower())), None)
                     if not found: found = next((c for c in cols if 'produkcja dzienna' in c.lower()), None)
                 elif 'cum_speed' in tech.lower():
-                    found = next((c for c in cols if 'cum_speed' in c.lower() or 'cum' in c.lower() or 'narast' in c.lower()), None)
+                    found = next((c for c in cols if 'narastająca prędkość' in c.lower() or 'cum_speed' in c.lower() or 'cum' in c.lower() or 'narast' in c.lower()), None)
                 elif 'date' in tech.lower():
-                    found = next((c for c in cols if 'date' in c.lower() or 'data' in c.lower()), None)
+                    found = next((c for c in cols if 'dzień' in c.lower() or 'date' in c.lower() or 'data' in c.lower()), None)
                 elif 'segment' in tech.lower():
                     found = next((c for c in cols if 'segment' in c.lower()), None)
                 elif 'brygada' in tech.lower():
@@ -1096,8 +1096,8 @@ def get_jumbo_data():
                 print(f"✅ Zmapowano {tech} -> {found}")
             else:
                 if tech == 'mtf_report_date':
-                    # Jeśli nadal brak mtf_report_date, spróbuj użyć pierwszej kolumny z datą
-                    date_like = next((c for c in cols if 'date' in c.lower() or 'data' in c.lower()), None)
+                    # Jeśli nadal brak mtf_report_date, spróbuj użyć kolumny 'Dzień'
+                    date_like = next((c for c in cols if 'dzień' in c.lower() or 'date' in c.lower() or 'data' in c.lower()), None)
                     if date_like:
                         col_map[tech] = date_like
                         print(f"⚠️ Używam {date_like} jako mtf_report_date")
@@ -1151,15 +1151,19 @@ def get_jumbo_data():
             seg_df[speed_col] = pd.to_numeric(seg_df[speed_col], errors='coerce').fillna(0)
             seg_df[cum_col] = pd.to_numeric(seg_df[cum_col], errors='coerce').fillna(0)
             
-            # Formatowanie daty dla grupowania
-            seg_df['Dzien_Str'] = seg_df[date_col].dt.strftime('%d.%m.%Y')
-            
             # Agregacja: SUM dla dziennej, LAST dla narastającej (zgodnie z logiką analityczną)
             # Sortujemy po dacie przed agg aby 'last' było poprawne
-            grouped = seg_df.sort_values(date_col).groupby('Dzien_Str').agg({
+            seg_df = seg_df.sort_values(date_col)
+            seg_df['Dzien_Str'] = seg_df[date_col].dt.strftime('%d.%m.%Y')
+            
+            grouped = seg_df.groupby('Dzien_Str').agg({
                 speed_col: 'sum',
                 cum_col: 'last'
             }).reset_index()
+            
+            # Sortujemy zgrupowane dane według daty (nie alfabetycznie po stringu)
+            grouped['SortDate'] = pd.to_datetime(grouped['Dzien_Str'], format='%d.%m.%Y')
+            grouped = grouped.sort_values('SortDate')
             
             # Mapowanie do pełnej listy dni zakresu
             seg_data_daily = []
