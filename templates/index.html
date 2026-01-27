@@ -111,29 +111,23 @@
 
             <!-- Sekcja: Wykresy -->
             <section id="section-wykresy" class="content-section active absolute inset-0 p-12">
-                <div class="grid grid-cols-2 gap-8 h-full">
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+                <div class="h-full">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 h-full flex flex-col">
                         <div class="mb-6">
                             <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-3xl font-bold text-gray-800 dark:text-white">Produkcja 7 dni</h2>
-                                <select id="machine-select" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                                <h2 class="text-4xl font-bold text-gray-800 dark:text-white">Produkcja 7 dni</h2>
+                                <select id="machine-select" class="text-xl px-6 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-orange-500 focus:border-orange-500 dark:bg-gray-700 dark:text-white dark:border-gray-600 shadow-sm">
                                     <option value="">Ładowanie...</option>
                                 </select>
                             </div>
-                            <div class="flex items-center gap-4">
-                                <label class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap" id="day-range-label">Dni 1-7</label>
-                                <input type="range" id="day-slider" min="1" max="25" value="1" step="1" class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-orange-500">
+                            <div class="flex items-center gap-6">
+                                <label class="text-xl font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap" id="day-range-label">Dni 1-7</label>
+                                <input type="range" id="day-slider" min="1" max="25" value="1" step="1" class="flex-1 h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-orange-500">
                             </div>
                         </div>
-                        <canvas id="productionChart"></canvas>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Liczba innowacji</h2>
-                        <canvas id="innovationChart"></canvas>
-                    </div>
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 col-span-2">
-                        <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Efektywność</h2>
-                        <canvas id="efficiencyChart"></canvas>
+                        <div class="flex-1 relative min-h-0">
+                            <canvas id="productionChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </section>

@@ -326,57 +326,6 @@ function createCharts(data) {
     if (data.series && Array.isArray(data.series)) {
         createCombinedChart(data.series);
     }
-    
-    const innovationData = [5, 7, 6, 8, 10, 9, 11];
-    const efficiencyData = [85, 88, 90, 87, 92, 89, 94];
-    const isDark = document.documentElement.classList.contains('dark');
-    const textColor = isDark ? '#FFFFFF' : '#1F2937';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    
-    const commonOptions = {
-        responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor } },
-            x: { ticks: { color: textColor }, grid: { display: false } }
-        }
-    };
-    
-    const labels = ['Dzień 1', 'Dzień 2', 'Dzień 3', 'Dzień 4', 'Dzień 5', 'Dzień 6', 'Dzień 7'];
-    
-    const ctxInnovation = document.getElementById('innovationChart');
-    if (ctxInnovation) {
-        if (charts.innovation) charts.innovation.destroy();
-        charts.innovation = new Chart(ctxInnovation, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Innowacje', data: innovationData,
-                    backgroundColor: 'rgba(0, 78, 137, 0.2)', borderColor: 'rgba(0, 78, 137, 1)',
-                    borderWidth: 3, tension: 0.4, fill: true
-                }]
-            },
-            options: commonOptions
-        });
-    }
-    
-    const ctxEfficiency = document.getElementById('efficiencyChart');
-    if (ctxEfficiency) {
-        if (charts.efficiency) charts.efficiency.destroy();
-        charts.efficiency = new Chart(ctxEfficiency, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Efektywność (%)', data: efficiencyData,
-                    backgroundColor: 'rgba(40, 167, 69, 0.2)', borderColor: 'rgba(40, 167, 69, 1)',
-                    borderWidth: 3, tension: 0.4, fill: true
-                }]
-            },
-            options: { ...commonOptions, scales: { ...commonOptions.scales, y: { ...commonOptions.scales.y, min: 0, max: 100 } } }
-        });
-    }
 }
 
 // ==================== INSPIRACJE ====================
