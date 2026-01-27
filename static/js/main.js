@@ -41,19 +41,23 @@ async function initializeApp() {
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
     
+    // Załaduj konfigurację i widoczność jako pierwsze
+    await loadContent();
+    
     // Załaduj dane
     await loadMachines();
     await loadInspirationsData();
     await loadSlidesData();
     
-    // Załaduj dodatkową treść
-    await loadContent();
-    
     // Rozpocznij automatyczną rotację
     startAutoRotation();
     
-    // Ustaw pierwszą sekcję jako aktywną
-    showSection('wykresy');
+    // Ustaw pierwszą dostępną sekcję jako aktywną
+    if (availableSections.length > 0) {
+        showSection(availableSections[0]);
+    } else {
+        showSection('wykresy');
+    }
     
     // Auto-refresh co 5 minut
     setInterval(refreshContent, 5 * 60 * 1000);
@@ -75,7 +79,17 @@ function updateCurrentTime() {
 
 // ==================== NAWIGACJA SEKCJI ====================
 
+// Stan widoczności sekcji
+let pagesVisible = {};
+let availableSections = ['wykresy', 'inspiracje', 'zdjecia', 'o-nas', 'powerbi'];
+
 function showSection(sectionName) {
+    // Sprawdź czy sekcja nie jest ukryta (poza dashboardem który jest bazowy)
+    if (pagesVisible && pagesVisible[sectionName] === false) {
+        console.warn('Sekcja ukryta:', sectionName);
+        return;
+    }
+
     console.log('Changing section to:', sectionName);
     
     // Usuń aktywność ze wszystkich sekcji i przycisków
@@ -122,12 +136,13 @@ function showSection(sectionName) {
 // ==================== AUTOMATYCZNA ROTACJA ====================
 
 function startAutoRotation() {
-    const sections = ['powerbi', 'wykresy', 'inspiracje', 'zdjecia', 'o-nas'];
     let currentIndex = 0;
     
     rotationInterval = setInterval(() => {
-        currentIndex = (currentIndex + 1) % sections.length;
-        showSection(sections[currentIndex]);
+        if (availableSections.length > 0) {
+            currentIndex = (currentIndex + 1) % availableSections.length;
+            showSection(availableSections[currentIndex]);
+        }
     }, 30000); // 30 sekund
     
     // Timer wizualny
@@ -696,10 +711,42 @@ async function loadContent() {
         const content = await response.json();
         
         // Aktualizuj teksty
-        if (content.about_text) {
+        if (content.settings) {
             const aboutEl = document.getElementById('about-text');
-            if (aboutEl) aboutEl.textContent = content.about_text;
+            if (aboutEl) aboutEl.textContent = content.settings.about_text;
+            
+            const headerEl = document.getElementById('header-title');
+            if (headerEl) headerEl.textContent = content.settings.header_title;
+            
+            const footerEl = document.getElementById('footer-note');
+            if (footerEl) footerEl.textContent = content.settings.footer_note;
         }
+
+        // Aktualizuj widoczność i rotację
+        if (content.visibility) {
+            pagesVisible = content.visibility;
+            const allPossible = ['wykresy', 'inspiracje', 'zdjecia', 'o-nas', 'powerbi'];
+            availableSections = allPossible.filter(s => pagesVisible[s] !== false);
+            
+            // Ukryj/pokaż przyciski w menu bocznym dynamicznie
+            allPossible.forEach(s => {
+                const btn = document.querySelector(`.nav-btn[data-section="${s}"]`);
+                if (btn) {
+                    btn.style.display = pagesVisible[s] === false ? 'none' : 'block';
+                }
+            });
+
+            // Jeśli obecna sekcja została wyłączona, przejdź do pierwszej dostępnej
+            if (pagesVisible[currentSection] === false && availableSections.length > 0) {
+                showSection(availableSections[0]);
+            }
+        }
+        
+        // Inspiracje
+        if (content.inspirations) {
+            displayInspirations(content.inspirations);
+        }
+
     } catch (error) {
         console.error('Błąd ładowania treści:', error);
     }

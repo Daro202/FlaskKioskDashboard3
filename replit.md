@@ -96,20 +96,12 @@ Aplikacja webowa Flask działająca jako firmowy kiosk do wyświetlania dashboar
   - Etykiety wartości nad słupkami
   - Legenda pozioma na dole
 
-### 4. API Endpoints
-- `GET /` - Strona główna
-- `GET /admin` - Panel administracyjny
-- `POST /admin` - Logowanie PIN
-- `GET /wykres` - Strona z wykresem Plotly
-- `POST /api/settings` - Aktualizacja ustawień
-- `POST /api/inspiration` - Dodanie inspiracji
-- `DELETE /api/inspiration/<id>` - Usunięcie inspiracji
-- `POST /api/upload` - Upload pliku
-- `GET /api/chart-data` - Dane do wykresów Chart.js
-- `GET /api/series?typ=Dzienne&kod=1310&brig=A` - Dane do wykresu Plotly
-- `GET /api/slides` - Lista zdjęć
-- `GET /api/inspirations` - Lista inspiracji
-- `GET /api/content` - Cała treść (dla auto-refresh)
+### 5. Zarządzanie widocznością stron (/admin)
+- **Sekcja "Widoczność stron"**: Pozwala administratorowi włączać/wyłączać sekcje w kiosku.
+- **Obsługiwane sekcje**: Dashboard, Wykresy, Inspiracje, Zdjęcia, Quiz, O nas, Power BI.
+- **Logika**: Ukryte strony nie pojawiają się w menu i są pomijane w automatycznej rotacji. Dostęp do strony Quiz jest blokowany (403), jeśli jest wyłączona.
+- **Baza danych**: Tabela `page_visibility` (page_id, title, is_visible).
+- **Funkcje bonusowe**: Przyciski "Włącz wszystkie" / "Wyłącz wszystkie", ikony stanu (widoczne/ukryte).
 
 ## Konfiguracja
 

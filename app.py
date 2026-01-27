@@ -57,6 +57,12 @@ def init_db():
                   caption TEXT,
                   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''')
     
+    # Tabela z widocznością stron
+    c.execute('''CREATE TABLE IF NOT EXISTS page_visibility
+                 (page_id TEXT PRIMARY KEY,
+                  title TEXT,
+                  is_visible INTEGER DEFAULT 1)''')
+    
     # Wstaw domyślne ustawienia jeśli nie istnieją
     c.execute("SELECT COUNT(*) FROM settings")
     if c.fetchone()[0] == 0:
@@ -66,6 +72,20 @@ def init_db():
             ('about_text', 'Nasz zespół stale poszukuje nowych rozwiązań i inspiracji.')
         ]
         c.executemany("INSERT INTO settings (key, value) VALUES (?, ?)", default_settings)
+
+    # Wstaw domyślne strony jeśli nie istnieją
+    c.execute("SELECT COUNT(*) FROM page_visibility")
+    if c.fetchone()[0] == 0:
+        default_pages = [
+            ('dashboard', 'Dashboard', 1),
+            ('wykresy', 'Wykresy', 1),
+            ('inspiracje', 'Inspiracje', 1),
+            ('zdjecia', 'Zdjęcia', 1),
+            ('quiz', 'Quiz', 1),
+            ('o-nas', 'O nas', 1),
+            ('powerbi', 'Power BI', 1)
+        ]
+        c.executemany("INSERT INTO page_visibility (page_id, title, is_visible) VALUES (?, ?, ?)", default_pages)
         
         # Dodaj przykładowe inspiracje
         example_inspirations = [
@@ -353,6 +373,40 @@ def index():
                          footer_note=footer_note,
                          inspirations=inspirations)
 
+@app.context_processor
+def inject_page_visibility():
+    """Wstrzykuje stan widoczności stron do wszystkich szablonów"""
+    try:
+        conn = sqlite3.connect('kiosk.db')
+        c = conn.cursor()
+        c.execute('SELECT page_id, is_visible FROM page_visibility')
+        visibility = {row[0]: bool(row[1]) for row in c.fetchall()}
+        conn.close()
+        return dict(pages_visible=visibility)
+    except:
+        return dict(pages_visible={})
+
+@app.route('/api/visibility', methods=['POST'])
+def update_visibility():
+    """Aktualizuj widoczność stron"""
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Brak autoryzacji'}), 401
+    
+    data = request.json or {}
+    page_id = data.get('page_id')
+    is_visible = 1 if data.get('is_visible') else 0
+    
+    if not page_id:
+        return jsonify({'error': 'Brak ID strony'}), 400
+        
+    conn = sqlite3.connect('kiosk.db')
+    c = conn.cursor()
+    c.execute("UPDATE page_visibility SET is_visible=? WHERE page_id=?", (is_visible, page_id))
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True})
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     """Panel administracyjny"""
@@ -379,6 +433,7 @@ def admin():
     settings = c.execute('SELECT key, value FROM settings').fetchall()
     settings_dict = {row[0]: row[1] for row in settings}
     inspirations = c.execute('SELECT id, title, description, image_url FROM inspirations ORDER BY created_at DESC').fetchall()
+    pages = c.execute('SELECT page_id, title, is_visible FROM page_visibility').fetchall()
     conn.close()
     
     return render_template('admin.html',
@@ -386,7 +441,8 @@ def admin():
                          header_title=settings_dict.get('header_title', ''),
                          footer_note=settings_dict.get('footer_note', ''),
                          about_text=settings_dict.get('about_text', ''),
-                         inspirations=inspirations)
+                         inspirations=inspirations,
+                         pages=pages)
 
 @app.route('/admin/logout')
 def admin_logout():
@@ -397,6 +453,16 @@ def admin_logout():
 @app.route('/quiz')
 def quiz():
     """Strona Quiz / Pytanie dnia"""
+    # Sprawdź widoczność
+    conn = sqlite3.connect('kiosk.db')
+    c = conn.cursor()
+    c.execute('SELECT is_visible FROM page_visibility WHERE page_id=?', ('quiz',))
+    row = c.fetchone()
+    conn.close()
+    
+    if row and not row[0]:
+        return "Brak uprawnień do tej sekcji", 403
+        
     quiz_data = get_current_quiz_question()
     header_title = get_setting('header_title')
     footer_note = get_setting('footer_note')
@@ -690,11 +756,28 @@ def api_inspirations():
 @app.route('/api/content')
 def get_content():
     """Zwróć całą treść dla strony głównej (dla auto-refresh)"""
+    conn = sqlite3.connect('kiosk.db')
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    
+    # Ustawienia
+    settings_rows = c.execute('SELECT key, value FROM settings').fetchall()
+    settings_dict = {row['key']: row['value'] for row in settings_rows}
+    
+    # Inspiracje
+    inspirations = c.execute('SELECT id, title, description, image_url FROM inspirations ORDER BY created_at DESC').fetchall()
+    inspirations_list = [dict(row) for row in inspirations]
+    
+    # Widoczność
+    visibility_rows = c.execute('SELECT page_id, is_visible FROM page_visibility').fetchall()
+    visibility_dict = {row['page_id']: bool(row['is_visible']) for row in visibility_rows}
+    
+    conn.close()
+    
     return jsonify({
-        'header_title': get_setting('header_title'),
-        'footer_note': get_setting('footer_note'),
-        'about_text': get_setting('about_text'),
-        'inspirations': get_inspirations(),
+        'settings': settings_dict,
+        'inspirations': inspirations_list,
+        'visibility': visibility_dict,
         'chart_data': get_chart_data(),
         'slides': get_slide_images()
     })
