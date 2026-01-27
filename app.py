@@ -433,7 +433,8 @@ def admin():
     settings = c.execute('SELECT key, value FROM settings').fetchall()
     settings_dict = {row[0]: row[1] for row in settings}
     inspirations = c.execute('SELECT id, title, description, image_url FROM inspirations ORDER BY created_at DESC').fetchall()
-    pages = c.execute('SELECT page_id, title, is_visible FROM page_visibility').fetchall()
+    pages_rows = c.execute('SELECT page_id, title, is_visible FROM page_visibility').fetchall()
+    pages = [dict(row) for row in pages_rows]
     conn.close()
     
     return render_template('admin.html',
