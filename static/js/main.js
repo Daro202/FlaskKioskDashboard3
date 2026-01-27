@@ -500,6 +500,12 @@ function createPerformanceChart(data) {
         };
     });
 
+    // Obliczamy max z obu serii danych dla synchronizacji osi
+    let allValues = [];
+    data.series.forEach(s => allValues.push(...s.data.filter(v => v !== null)));
+    const globalMax = allValues.length > 0 ? Math.max(...allValues) : 10000;
+    const axisMax = Math.ceil(globalMax * 1.1 / 1000) * 1000; // Zaokrąglamy w górę do pełnego tysiąca z 10% marginesem
+
     charts.performance = new Chart(ctx, {
         type: 'bar',
         data: { 
@@ -530,7 +536,8 @@ function createPerformanceChart(data) {
                     display: true,
                     position: 'left', 
                     beginAtZero: true,
-                    suggestedMax: 10000, // Zapewnia odpowiednią wysokość słupków
+                    min: 0,
+                    max: axisMax, // Identyczna skala
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
@@ -544,7 +551,8 @@ function createPerformanceChart(data) {
                     display: true,
                     position: 'right', 
                     beginAtZero: true,
-                    suggestedMax: 10000, // Analogiczna skala dla czytelności wizualnej
+                    min: 0,
+                    max: axisMax, // Identyczna skala
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
