@@ -1156,8 +1156,9 @@ def get_jumbo_data():
             seg_df[speed_col] = pd.to_numeric(seg_df[speed_col], errors='coerce').fillna(0)
             seg_df[cum_col] = pd.to_numeric(seg_df[cum_col], errors='coerce').fillna(0)
             
-            # Agregacja: SUM dla dziennej, LAST dla narastającej (zgodnie z logiką analityczną)
-            # Sortujemy po dacie przed agg aby 'last' było poprawne
+            # Grupowanie po dniu (jeśli jest wiele rekordów dla tego samego segmentu/brygady w jednym dniu)
+            # Dla prędkości dziennej: SUM (agregacja rekordów z tego samego dnia)
+            # Dla prędkości narastającej: LAST (wartość narastająca z ostatniego rekordu w danym dniu)
             seg_df = seg_df.sort_values(date_col)
             seg_df['Dzien_Str'] = seg_df[date_col].dt.strftime('%d.%m.%Y')
             
@@ -1166,17 +1167,21 @@ def get_jumbo_data():
                 cum_col: 'last'
             }).reset_index()
             
-            # Sortujemy zgrupowane dane według daty (nie alfabetycznie po stringu)
+            # Sortujemy zgrupowane dane według daty
             grouped['SortDate'] = pd.to_datetime(grouped['Dzien_Str'], format='%d.%m.%Y')
             grouped = grouped.sort_values('SortDate')
             
-            # Mapowanie do pełnej listy dni zakresu
+            # Mapowanie do pełnej listy dni zakresu (zapewnienie ciągłości osi X)
             seg_data_daily = []
             seg_data_cum = []
             for d_str in unique_days_str:
                 row = grouped[grouped['Dzien_Str'] == d_str]
-                seg_data_daily.append(float(row[speed_col].iloc[0]) if not row.empty else 0)
-                seg_data_cum.append(float(row[cum_col].iloc[0]) if not row.empty else 0)
+                if not row.empty:
+                    seg_data_daily.append(float(row[speed_col].iloc[0]))
+                    seg_data_cum.append(float(row[cum_col].iloc[0]))
+                else:
+                    seg_data_daily.append(0)
+                    seg_data_cum.append(0)
 
             if any(seg_data_daily) or any(seg_data_cum):
                 # Dzienne jako słupki
