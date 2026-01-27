@@ -1080,16 +1080,17 @@ def get_jumbo_data():
             # Jeśli nie znaleziono, spróbuj znaleźć po fragmentach dla kolumn prędkości
             if not found:
                 if 'speed' in tech.lower() and 'cum' not in tech.lower():
-                    found = next((c for c in cols if 'prędkość dzienna' in c.lower() or ('speed' in c.lower() and 'cum' not in c.lower())), None)
-                    if not found: found = next((c for c in cols if 'produkcja dzienna' in c.lower()), None)
+                    # SZUKAMY DOKŁADNIE: Prędkość dzienna [m2/wh]
+                    found = next((c for c in cols if 'prędkość dzienna' in c.lower()), None)
                 elif 'cum_speed' in tech.lower():
-                    found = next((c for c in cols if 'narastająca prędkość' in c.lower() or 'cum_speed' in c.lower() or 'cum' in c.lower() or 'narast' in c.lower()), None)
+                    # SZUKAMY DOKŁADNIE: Narastająca prędkość [m2/wh]
+                    found = next((c for c in cols if 'narastająca prędkość' in c.lower()), None)
                 elif 'date' in tech.lower():
-                    found = next((c for c in cols if 'dzień' in c.lower() or 'date' in c.lower() or 'data' in c.lower()), None)
+                    found = next((c for c in cols if 'dzień' in c.lower()), None)
                 elif 'segment' in tech.lower():
                     found = next((c for c in cols if 'segment' in c.lower()), None)
                 elif 'brygada' in tech.lower():
-                    found = next((c for c in cols if 'brygada' in c.lower() or 'shift' in c.lower()), None)
+                    found = next((c for c in cols if 'brygada' in c.lower()), None)
 
             if found:
                 col_map[tech] = found
@@ -1097,7 +1098,7 @@ def get_jumbo_data():
             else:
                 if tech == 'mtf_report_date':
                     # Jeśli nadal brak mtf_report_date, spróbuj użyć kolumny 'Dzień'
-                    date_like = next((c for c in cols if 'dzień' in c.lower() or 'date' in c.lower() or 'data' in c.lower()), None)
+                    date_like = next((c for c in cols if 'dzień' in c.lower()), None)
                     if date_like:
                         col_map[tech] = date_like
                         print(f"⚠️ Używam {date_like} jako mtf_report_date")
@@ -1105,6 +1106,10 @@ def get_jumbo_data():
                         print(f"❌ Brak wymaganej kolumny technicznej: {tech}. Dostępne: {cols}")
                         return jsonify({'series': [], 'error': f"Brak kolumny {tech}"})
                 else:
+                    # Jeśli nie znaleziono kolumny prędkości, to krytyczny błąd
+                    if tech in ['Speed_m2_wh', 'Cum_Speed_m2_wh']:
+                        print(f"❌ Brak wymaganej kolumny z Excela: {tech}")
+                        return jsonify({'series': [], 'error': f"Brak kolumny {tech}"})
                     col_map[tech] = tech # Fallback
 
         # Używamy zmapowanych kolumn
