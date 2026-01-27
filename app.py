@@ -1059,43 +1059,40 @@ def load_jumbo():
 
 @app.route('/api/jumbo-data')
 def get_jumbo_data():
-    """API dla wykresu wydajności z Jumbo.xlsx (Zgodnie z kodem referencyjnym)"""
+    """API dla wykresu wydajności z Jumbo.xlsx (Poprawiona logika: bez sumowania, obsługa None)"""
     try:
         segments_selected = request.args.getlist('segments[]')
         if not segments_selected:
             segments_selected = ["Amazon", "Reszta"]
-        brygada_selected = request.args.get('brygada', 'All')
         
-        # Kod referencyjny używa bezpośrednio pd.read_excel
+        # Kod używa bezpośrednio pd.read_excel
         df = pd.read_excel("Jumbo.xlsx")
         if df.empty:
             return jsonify({'series': []})
 
-        # 1. Konwersja typów (zgodnie z kodem referencyjnym)
+        # 1. Konwersja typów (z zachowaniem NaN)
         df["Dzień"] = pd.to_datetime(df["Dzień"], dayfirst=True, errors='coerce')
-        df["Prędkość dzienna [m2/wh]"] = pd.to_numeric(df["Prędkość dzienna [m2/wh]"], errors="coerce").fillna(0)
-        df["Narastająca prędkość [m2/wh]"] = pd.to_numeric(df["Narastająca prędkość [m2/wh]"], errors="coerce").fillna(0)
+        df["Prędkość dzienna [m2/wh]"] = pd.to_numeric(df["Prędkość dzienna [m2/wh]"], errors="coerce")
+        df["Narastająca prędkość [m2/wh]"] = pd.to_numeric(df["Narastająca prędkość [m2/wh]"], errors="coerce")
         
-        # Usuwamy puste daty
+        # Usuwamy tylko wiersze bez daty
         df = df.dropna(subset=["Dzień"])
         
-        # 2. Filtrowanie
-        filtered = df[df["Segment"].isin(segments_selected)]
-        if brygada_selected != "All":
-            filtered = filtered[filtered["Brygada"] == brygada_selected]
-            
-        # 3. Sortowanie (WAŻNE dla osi X)
+        # 2. Filtrowanie: TYLKO wiersze Brygada == "All"
+        filtered = df[(df["Segment"].isin(segments_selected)) & (df["Brygada"] == "All")]
+        
+        # 3. Sortowanie
         filtered = filtered.sort_values("Dzień")
         
         if filtered.empty:
             return jsonify({'series': [], 'days': []})
 
-        # Ograniczenie do ostatnich 14 dni aktywności (dla czytelności kiosku)
+        # Ograniczenie do ostatnich 14 dni
         max_date = filtered["Dzień"].max()
         min_date = max_date - pd.Timedelta(days=14)
         filtered = filtered[filtered["Dzień"] > min_date]
 
-        # 4. Przygotowanie danych (Zapewnienie spójnej osi X)
+        # 4. Przygotowanie osi X
         unique_days = sorted(filtered["Dzień"].unique())
         unique_days_str = [d.strftime('%d.%m.%Y') for d in pd.to_datetime(unique_days)]
         
@@ -1112,30 +1109,32 @@ def get_jumbo_data():
             for d in unique_days:
                 day_df = seg_df[seg_df["Dzień"] == d]
                 if not day_df.empty:
-                    # Agregacja w ramach dnia: SUM dla dziennej, LAST dla narastającej (zgodnie z logiką rekordową)
-                    seg_data_daily.append(float(day_df["Prędkość dzienna [m2/wh]"].sum()))
-                    seg_data_cum.append(float(day_df["Narastająca prędkość [m2/wh]"].iloc[-1]))
-                else:
-                    seg_data_daily.append(0)
-                    seg_data_cum.append(0)
+                    # Bierzemy pierwszy (i jedyny dla All) wiersz - brak sumowania!
+                    val_daily = day_df["Prędkość dzienna [m2/wh]"].iloc[0]
+                    val_cum = day_df["Narastająca prędkość [m2/wh]"].iloc[0]
                     
-            if any(seg_data_daily) or any(seg_data_cum):
-                # Dzienna (Słupki)
+                    seg_data_daily.append(float(val_daily) if pd.notnull(val_daily) else None)
+                    seg_data_cum.append(float(val_cum) if pd.notnull(val_cum) else None)
+                else:
+                    seg_data_daily.append(None)
+                    seg_data_cum.append(None)
+                    
+            if any(v is not None for v in seg_data_daily) or any(v is not None for v in seg_data_cum):
+                # Dzienna
                 series_data.append({
                     'type': 'bar',
                     'name': f'{segment} – dzienna',
-                    'data': [round(v, 0) for v in seg_data_daily],
+                    'data': [round(v, 0) if v is not None else None for v in seg_data_daily],
                     'color': kolory_slupki.get(segment, '#999'),
                     'yaxis': 'y1'
                 })
-                # Narastająca (Linia)
+                # Narastająca
                 series_data.append({
                     'type': 'line',
                     'name': f'{segment} – narastająca',
-                    'data': [round(v, 0) for v in seg_data_cum],
+                    'data': [round(v, 0) if v is not None else None for v in seg_data_cum],
                     'color': kolory_narastajace.get(segment, '#666'),
-                    'yaxis': 'y2',
-                    'marker': {'enabled': True, 'radius': 4}
+                    'yaxis': 'y2'
                 })
 
         return jsonify({
