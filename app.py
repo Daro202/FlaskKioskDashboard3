@@ -1059,158 +1059,89 @@ def load_jumbo():
 
 @app.route('/api/jumbo-data')
 def get_jumbo_data():
-    """API dla wykresu wydajności z Jumbo.xlsx"""
+    """API dla wykresu wydajności z Jumbo.xlsx (Zgodnie z kodem referencyjnym)"""
     try:
-        segments = request.args.getlist('segments[]')
-        brygada = request.args.get('brygada', 'All')
+        segments_selected = request.args.getlist('segments[]')
+        if not segments_selected:
+            segments_selected = ["Amazon", "Reszta"]
+        brygada_selected = request.args.get('brygada', 'All')
         
-        df = load_jumbo()
-        if df.empty:
-            return jsonify({'series': []})
-            
-        # Mapowanie kolumn technicznych - szukanie najbardziej zbliżonych
-        cols = df.columns.tolist()
-        
-        # Szukamy kolumn technicznych ignorując wielkość liter i spacje
-        col_map = {}
-        for tech in ['mtf_report_date', 'Speed_m2_wh', 'Cum_Speed_m2_wh', 'Segment', 'Brygada']:
-            # Najpierw szukamy dokładnego dopasowania (case-insensitive i strip)
-            found = next((c for c in cols if c.lower().strip() == tech.lower()), None)
-            
-            # Jeśli nie znaleziono, spróbuj znaleźć po fragmentach dla kolumn prędkości
-            if not found:
-                if 'speed' in tech.lower() and 'cum' not in tech.lower():
-                    # SZUKAMY DOKŁADNIE: Prędkość dzienna [m2/wh]
-                    found = next((c for c in cols if 'prędkość dzienna' in c.lower()), None)
-                elif 'cum_speed' in tech.lower():
-                    # SZUKAMY DOKŁADNIE: Narastająca prędkość [m2/wh]
-                    found = next((c for c in cols if 'narastająca prędkość' in c.lower()), None)
-                elif 'date' in tech.lower():
-                    found = next((c for c in cols if 'dzień' in c.lower()), None)
-                elif 'segment' in tech.lower():
-                    found = next((c for c in cols if 'segment' in c.lower()), None)
-                elif 'brygada' in tech.lower():
-                    found = next((c for c in cols if 'brygada' in c.lower()), None)
-
-            if found:
-                col_map[tech] = found
-                print(f"✅ Zmapowano {tech} -> {found}")
-            else:
-                if tech == 'mtf_report_date':
-                    # Jeśli nadal brak mtf_report_date, spróbuj użyć kolumny 'Dzień'
-                    date_like = next((c for c in cols if 'dzień' in c.lower()), None)
-                    if date_like:
-                        col_map[tech] = date_like
-                        print(f"⚠️ Używam {date_like} jako mtf_report_date")
-                    else:
-                        print(f"❌ Brak wymaganej kolumny technicznej: {tech}. Dostępne: {cols}")
-                        return jsonify({'series': [], 'error': f"Brak kolumny {tech}"})
-                else:
-                    # Jeśli nie znaleziono kolumny prędkości, to krytyczny błąd
-                    if tech in ['Speed_m2_wh', 'Cum_Speed_m2_wh']:
-                        print(f"❌ Brak wymaganej kolumny z Excela: {tech}")
-                        return jsonify({'series': [], 'error': f"Brak kolumny {tech}"})
-                    col_map[tech] = tech # Fallback
-
-        # Używamy zmapowanych kolumn
-        date_col = col_map['mtf_report_date']
-        speed_col = col_map['Speed_m2_wh']
-        cum_col = col_map['Cum_Speed_m2_wh']
-        seg_col = col_map['Segment']
-        brygada_col = col_map['Brygada']
-
-        # Czyszczenie i konwersja typów
-        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
-        df = df.dropna(subset=[date_col])
-        
-        # Filtrowanie brygady
-        if brygada != 'All':
-            # Używamy brygada_col zamiast bryg_col i brigade
-            df = df[df[brygada_col].astype(str).str.contains(brygada, case=False, na=False)]
-            
-        # Filtrowanie segmentów
-        if segments:
-            df = df[df[seg_col].isin(segments)]
-        
+        # Kod referencyjny używa bezpośrednio pd.read_excel
+        df = pd.read_excel("Jumbo.xlsx")
         if df.empty:
             return jsonify({'series': []})
 
-        # Ograniczenie zakresu do ostatnich 14 dni aktywności w danych
-        max_date = df[date_col].max()
-        min_date_limit = max_date - pd.Timedelta(days=14)
-        df = df[df[date_col] > min_date_limit]
+        # 1. Konwersja typów (zgodnie z kodem referencyjnym)
+        df["Dzień"] = pd.to_datetime(df["Dzień"], dayfirst=True, errors='coerce')
+        df["Prędkość dzienna [m2/wh]"] = pd.to_numeric(df["Prędkość dzienna [m2/wh]"], errors="coerce").fillna(0)
+        df["Narastająca prędkość [m2/wh]"] = pd.to_numeric(df["Narastająca prędkość [m2/wh]"], errors="coerce").fillna(0)
         
-        # Przygotowanie osi X (posortowane unikalne daty)
-        unique_days = sorted(df[date_col].unique())
+        # Usuwamy puste daty
+        df = df.dropna(subset=["Dzień"])
+        
+        # 2. Filtrowanie
+        filtered = df[df["Segment"].isin(segments_selected)]
+        if brygada_selected != "All":
+            filtered = filtered[filtered["Brygada"] == brygada_selected]
+            
+        # 3. Sortowanie (WAŻNE dla osi X)
+        filtered = filtered.sort_values("Dzień")
+        
+        if filtered.empty:
+            return jsonify({'series': [], 'days': []})
+
+        # Ograniczenie do ostatnich 14 dni aktywności (dla czytelności kiosku)
+        max_date = filtered["Dzień"].max()
+        min_date = max_date - pd.Timedelta(days=14)
+        filtered = filtered[filtered["Dzień"] > min_date]
+
+        # 4. Przygotowanie danych (Zapewnienie spójnej osi X)
+        unique_days = sorted(filtered["Dzień"].unique())
         unique_days_str = [d.strftime('%d.%m.%Y') for d in pd.to_datetime(unique_days)]
         
         series_data = []
         kolory_slupki = {'Amazon': '#004E89', 'Reszta': '#15803d'}
         kolory_narastajace = {'Amazon': '#FF6B35', 'Reszta': '#38bdf8'}
         
-        for segment in segments:
-            # KLUCZOWE: Filtrowanie dokładnie po segmencie i brygadzie
-            # Używamy brygada jako wartości filtra (może być 'All', ale wtedy df jest już odpowiednio przefiltrowane)
-            if brygada != 'All':
-                seg_df = df[(df[seg_col] == segment) & (df[brygada_col].astype(str).str.contains(brygada, case=False, na=False))].copy()
-            else:
-                seg_df = df[df[seg_col] == segment].copy()
-            if seg_df.empty:
-                continue
+        for segment in segments_selected:
+            seg_df = filtered[filtered["Segment"] == segment]
             
-            # Konwersja na liczby
-            seg_df[speed_col] = pd.to_numeric(seg_df[speed_col], errors='coerce').fillna(0)
-            seg_df[cum_col] = pd.to_numeric(seg_df[cum_col], errors='coerce').fillna(0)
-            
-            # Sortowanie chronologiczne
-            seg_df = seg_df.sort_values(date_col)
-            seg_df['Dzien_Str'] = seg_df[date_col].dt.strftime('%d.%m.%Y')
-            
-            # Grupowanie po dniu dla wybranego segmentu i brygady
-            # Prędkość dzienna: suma (jeśli występuje podział w ramach dnia)
-            # Prędkość narastająca: ostatnia wartość z wiersza (już skumulowana w Excelu)
-            grouped = seg_df.groupby('Dzien_Str').agg({
-                speed_col: 'sum',
-                cum_col: 'last'
-            }).reset_index()
-            
-            # Sortowanie wyników przed mapowaniem na oś X
-            grouped['SortDate'] = pd.to_datetime(grouped['Dzien_Str'], format='%d.%m.%Y')
-            grouped = grouped.sort_values('SortDate')
-            
-            # Mapowanie na osi X (14 dni)
             seg_data_daily = []
             seg_data_cum = []
-            for d_str in unique_days_str:
-                row = grouped[grouped['Dzien_Str'] == d_str]
-                if not row.empty:
-                    seg_data_daily.append(float(row[speed_col].iloc[0]))
-                    seg_data_cum.append(float(row[cum_col].iloc[0]))
+            
+            for d in unique_days:
+                day_df = seg_df[seg_df["Dzień"] == d]
+                if not day_df.empty:
+                    # Agregacja w ramach dnia: SUM dla dziennej, LAST dla narastającej (zgodnie z logiką rekordową)
+                    seg_data_daily.append(float(day_df["Prędkość dzienna [m2/wh]"].sum()))
+                    seg_data_cum.append(float(day_df["Narastająca prędkość [m2/wh]"].iloc[-1]))
                 else:
                     seg_data_daily.append(0)
                     seg_data_cum.append(0)
-
+                    
             if any(seg_data_daily) or any(seg_data_cum):
-                # Dzienne jako słupki
+                # Dzienna (Słupki)
                 series_data.append({
                     'type': 'bar',
-                    'name': f'{segment} (Dziennie)',
-                    'x': unique_days_str,
-                    'y': [round(v, 0) for v in seg_data_daily],
-                    'color': kolory_slupki.get(segment, '#999999')
+                    'name': f'{segment} – dzienna',
+                    'data': [round(v, 0) for v in seg_data_daily],
+                    'color': kolory_slupki.get(segment, '#999'),
+                    'yaxis': 'y1'
                 })
-                # Narastające jako linia
+                # Narastająca (Linia)
                 series_data.append({
                     'type': 'line',
-                    'name': f'{segment} (Narastająco)',
-                    'x': unique_days_str,
-                    'y': [round(v, 0) for v in seg_data_cum],
-                    'color': kolory_narastajace.get(segment, '#cccccc'),
-                    'line': {'width': 3},
-                    'marker': {'size': 8}
+                    'name': f'{segment} – narastająca',
+                    'data': [round(v, 0) for v in seg_data_cum],
+                    'color': kolory_narastajace.get(segment, '#666'),
+                    'yaxis': 'y2',
+                    'marker': {'enabled': True, 'radius': 4}
                 })
-                
-        return jsonify({'series': series_data})
+
+        return jsonify({
+            'series': series_data,
+            'days': unique_days_str
+        })
     except Exception as e:
         print(f"Błąd API jumbo: {e}")
         return jsonify({'series': [], 'error': str(e)})
