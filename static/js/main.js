@@ -486,26 +486,19 @@ function createPerformanceChart(series) {
     if (!ctx) return;
     if (charts.performance) charts.performance.destroy();
 
-    const allDays = new Set();
-    series.forEach(s => s.x.forEach(day => allDays.add(day)));
-    const labels = Array.from(allDays).sort((a, b) => a - b).map(d => `Dzień ${d}`);
-    const datasets = [];
+    if (!series || series.length === 0) {
+        console.warn('Brak danych dla wykresu wydajności');
+        return;
+    }
 
-    series.forEach(s => {
-        const dataMap = {};
-        s.x.forEach((day, i) => dataMap[day] = s.y[i]);
-        const data = Array.from(allDays).sort((a, b) => a - b).map(day => dataMap[day] || 0);
-        
-        datasets.push({
-            type: 'bar',
-            label: s.name,
-            data: data,
-            backgroundColor: s.color,
-            borderColor: s.color,
-            borderWidth: 1,
-            yAxisID: 'y'
-        });
-    });
+    const allLabels = series[0].x;
+    const datasets = series.map(s => ({
+        label: s.name,
+        data: s.y,
+        backgroundColor: s.color,
+        borderColor: s.color,
+        borderWidth: 1
+    }));
 
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
@@ -513,7 +506,7 @@ function createPerformanceChart(series) {
 
     charts.performance = new Chart(ctx, {
         type: 'bar',
-        data: { labels, datasets },
+        data: { labels: allLabels, datasets },
         options: {
             responsive: true,
             maintainAspectRatio: false,

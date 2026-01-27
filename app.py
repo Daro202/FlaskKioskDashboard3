@@ -1036,43 +1036,70 @@ def get_jumbo_data():
         if df.empty:
             return jsonify({'series': []})
             
+        # Szukamy kolumn zawierających datę i odpowiednie słowa kluczowe
+        cols = df.columns.tolist()
+        date_col = next((c for c in cols if 'date' in c.lower() or 'data' in c.lower() or 'dzien' in c.lower()), None)
+        daily_col = next((c for c in cols if 'speed' in c.lower() and 'cum' not in c.lower()), None)
+        cum_col = next((c for c in cols if 'cum_speed' in c.lower() or 'narast' in c.lower()), None)
+        segment_col = next((c for c in cols if 'segment' in c.lower()), None)
+        brygada_col = next((c for c in cols if 'brygada' in c.lower() or 'shift' in c.lower()), None)
+
+        if not all([date_col, daily_col, cum_col, segment_col, brygada_col]):
+            print(f"❌ Nie znaleziono wszystkich kolumn w Jumbo.xlsx. Znalezione: {date_col}, {daily_col}, {cum_col}, {segment_col}, {brygada_col}")
+            # Fallback na sztywne nazwy ze zdjęcia jeśli auto-detekcja zawiedzie
+            date_col = date_col or 'mtf_report_date'
+            daily_col = daily_col or 'Speed_m2_wh'
+            cum_col = cum_col or 'Cum_Speed_m2_wh'
+            segment_col = segment_col or 'Segment'
+            brygada_col = brygada_col or 'Brygada'
+
         # Filtrowanie brygady
         if brygada != 'All':
-            df = df[df['Brygada'] == brygada]
+            df = df[df[brygada_col].astype(str).str.contains(brygada, case=False, na=False)]
             
         # Filtrowanie segmentów
         if segments:
-            df = df[df['Segment'].isin(segments)]
+            df = df[df[segment_col].isin(segments)]
             
-        # Agregacja per dzień i segment
-        # Zakładamy kolumny: 'Dzien', 'Segment', 'Wartosc_Dzienna', 'Wartosc_Narastajaca'
-        # Jeśli kolumny są inne (np. Dzień w nagłówkach), trzeba użyć melt.
-        
         series_data = []
-        kolory_slupki = {'Amazon': '#004E89', 'Reszta': '#15803d'} # Ciemny niebieski i zielony
-        kolory_narastajace = {'Amazon': '#f97316', 'Reszta': '#38bdf8'} # Pomarańczowy i błękitny
+        kolory_slupki = {'Amazon': '#004E89', 'Reszta': '#15803d'}
+        kolory_narastajace = {'Amazon': '#f97316', 'Reszta': '#38bdf8'}
+        
+        # Przygotowanie osi X (daty)
+        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+        df = df.dropna(subset=[date_col])
+        df['Dzien_Str'] = df[date_col].dt.strftime('%d.%m.%Y')
+        
+        unique_days = sorted(df[date_col].unique())
+        unique_days_str = [d.strftime('%d.%m.%Y') for d in pd.to_datetime(unique_days)]
         
         for segment in segments:
-            seg_df = df[df['Segment'] == segment].groupby('Dzien').agg({
-                'Wartosc_Dzienna': 'sum',
-                'Wartosc_Narastajaca': 'sum'
-            }).reset_index().sort_values('Dzien')
+            seg_df = df[df[segment_col] == segment].groupby('Dzien_Str').agg({
+                daily_col: 'sum',
+                cum_col: 'sum'
+            }).reset_index()
             
-            if not seg_df.empty:
-                # Słupki dzienne
+            # Mapowanie do pełnej listy dni aby nie było dziur
+            seg_data_daily = []
+            seg_data_cum = []
+            for d_str in unique_days_str:
+                row = seg_df[seg_df['Dzien_Str'] == d_str]
+                seg_data_daily.append(float(row[daily_col].iloc[0]) if not row.empty else 0)
+                seg_data_cum.append(float(row[cum_col].iloc[0]) if not row.empty else 0)
+
+            if any(seg_data_daily) or any(seg_data_cum):
                 series_data.append({
                     'type': 'bar',
                     'name': f'{segment} - Dzienna',
-                    'x': seg_df['Dzien'].tolist(),
-                    'y': [round(v, 0) for v in seg_df['Wartosc_Dzienna'].tolist()],
+                    'x': unique_days_str,
+                    'y': [round(v, 0) for v in seg_data_daily],
                     'color': kolory_slupki.get(segment, '#999999')
                 })
-                # Słupki narastające (zmienione z line na bar)
                 series_data.append({
                     'type': 'bar',
                     'name': f'{segment} - Narastająca',
-                    'x': seg_df['Dzien'].tolist(),
-                    'y': [round(v, 0) for v in seg_df['Wartosc_Narastajaca'].tolist()],
+                    'x': unique_days_str,
+                    'y': [round(v, 0) for v in seg_data_cum],
                     'color': kolory_narastajace.get(segment, '#cccccc')
                 })
                 
