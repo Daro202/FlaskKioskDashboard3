@@ -390,7 +390,7 @@ def index():
                          footer_note=settings_dict.get('footer_note', 'Stora Enso'),
                          about_text=settings_dict.get('about_text', ''),
                          inspirations=inspirations,
-                         pages_visible=visibility)
+                         visibility=visibility)
 
 @app.context_processor
 def inject_page_visibility():
