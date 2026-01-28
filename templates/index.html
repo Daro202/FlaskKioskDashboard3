@@ -123,12 +123,14 @@
                     </div>
 
                     <!-- Karta: Power BI (Wspomniany Iframe/Przycisk) -->
-                    <div onclick="window.open('https://app.powerbi.com/reportEmbed?reportId=231840d0-8264-41ac-8ab0-25dc34d8aca2&autoAuth=true&ctid=75998ea3-790c-40ea-ac1e-02ee8edfb00f', '_blank')" class="bg-[#FF6B35] rounded-3xl shadow-xl p-8 cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center justify-center text-center text-white">
-                        <div class="mb-6 text-white">
-                            <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15h4v2h-4zm0-5h4v4h-4zm0-5h4v4h-4z"/></svg>
+                    <div onclick="window.open('https://app.powerbi.com/reportEmbed?reportId=231840d0-8264-41ac-8ab0-25dc34d8aca2&autoAuth=true&ctid=75998ea3-790c-40ea-ac1e-02ee8edfb00f', '_blank')" class="bg-[#FF6B35] rounded-3xl shadow-xl p-8 cursor-pointer transform transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center justify-center text-center text-white relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="mb-6 text-white">
+                                <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15h4v2h-4zm0-5h4v4h-4zm0-5h4v4h-4z"/></svg>
+                            </div>
+                            <h3 class="text-3xl font-bold mb-2 text-white">Power BI</h3>
+                            <p class="text-white opacity-90">Kliknij, aby otworzyć raport</p>
                         </div>
-                        <h3 class="text-3xl font-bold mb-2 text-white">Power BI</h3>
-                        <p class="text-white opacity-90">Kliknij, aby otworzyć raport</p>
                     </div>
                 </div>
             </section>
