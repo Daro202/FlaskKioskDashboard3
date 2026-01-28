@@ -611,8 +611,8 @@ async function loadContent() {
 
         if (content.visibility) {
             pagesVisible = content.visibility;
-            const allPossible = ['wykresy', 'inspiracje', 'zdjecia', 'o-nas', 'powerbi', 'quiz', 'dashboard'];
-            availableSections = allPossible.filter(s => pagesVisible[s] !== false && s !== 'dashboard');
+    let allPossible = ['dashboard', 'wykresy', 'performance', 'inspiracje', 'zdjecia', 'o-nas', 'powerbi', 'quiz'];
+    availableSections = allPossible.filter(s => pagesVisible[s] !== false);
             
             allPossible.forEach(s => {
                 const btn = document.querySelector(`.nav-btn[data-section="${s}"]`);
