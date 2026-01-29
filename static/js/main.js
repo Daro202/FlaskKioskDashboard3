@@ -488,16 +488,20 @@ function createPerformanceChart(data) {
         return;
     }
 
-    const container = ctx.parentElement;
-    if (!container) return;
+    const innerContainer = ctx.parentElement;
+    const scrollContainer = innerContainer ? innerContainer.parentElement : null;
+    if (!innerContainer || !scrollContainer) return;
 
-    // Wymuś wymiary kontenera
-    container.style.height = '550px';
-    container.style.minHeight = '550px';
-    container.style.overflowX = 'auto';
-    container.style.overflowY = 'hidden';
-    container.style.display = 'block';
-    container.style.position = 'relative';
+    // Kontener z scrollem
+    scrollContainer.style.height = '550px';
+    scrollContainer.style.minHeight = '550px';
+    scrollContainer.style.overflowX = 'auto';
+    scrollContainer.style.overflowY = 'hidden';
+    scrollContainer.style.position = 'relative';
+    
+    // Wewnętrzny kontener - szerokość zawartości
+    innerContainer.style.display = 'inline-block';
+    innerContainer.style.minWidth = 'max-content';
 
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
