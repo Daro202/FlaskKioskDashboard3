@@ -95,6 +95,7 @@ function showSection(sectionName) {
     
     const section = document.getElementById(`section-${sectionName}`);
     if (section) {
+        section.classList.remove('hidden');
         section.style.display = 'block';
         setTimeout(() => {
             section.classList.add('active');
@@ -586,10 +587,12 @@ function createPerformanceChart(data) {
 }
 
 async function loadPerformanceData() {
+    console.log('loadPerformanceData wywołane');
     const segmentsQuery = currentPerformanceSegments.map(s => `segments[]=${encodeURIComponent(s)}`).join('&');
     try {
         const response = await fetch(`/api/jumbo-data?${segmentsQuery}&brygada=${currentPerformanceBrygada}`);
         const data = await response.json();
+        console.log('Dane wydajności:', data.days ? data.days.length + ' dni' : 'brak');
         if (data && data.series && data.series.length > 0) {
             createPerformanceChart(data);
         }
