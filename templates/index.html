@@ -25,8 +25,34 @@
         body {
             font-family: 'Roboto', sans-serif;
             overflow: hidden;
-            height: 100vh;
-            width: 100vw;
+        }
+        
+        /* Pasek przewijania dla wykresu wydajności */
+        #performance-scroll-container {
+            scrollbar-width: auto !important;
+            scrollbar-color: #FF6B35 #e5e7eb !important;
+        }
+        #performance-scroll-container::-webkit-scrollbar {
+            height: 16px !important;
+            display: block !important;
+        }
+        #performance-scroll-container::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 8px;
+        }
+        #performance-scroll-container::-webkit-scrollbar-thumb {
+            background: #FF6B35;
+            border-radius: 8px;
+            border: 3px solid #e5e7eb;
+        }
+        #performance-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #e55a2b;
+        }
+        .dark #performance-scroll-container::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        .dark #performance-scroll-container::-webkit-scrollbar-thumb {
+            border-color: #374151;
         }
     </style>
 </head>
@@ -206,9 +232,20 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="performance-scroll-container" class="flex-1 relative min-h-0 performance-scroll" style="min-height: 500px; overflow-x: scroll; overflow-y: hidden; max-width: 100%;">
-                            <div style="min-width: max-content;">
-                                <canvas id="performanceChart"></canvas>
+                        <div class="flex-1 relative min-h-0" style="min-height: 500px;">
+                            <!-- Przyciski nawigacji -->
+                            <button onclick="scrollPerformanceChart(-300)" class="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg text-2xl font-bold">◄</button>
+                            <button onclick="scrollPerformanceChart(300)" class="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg text-2xl font-bold">►</button>
+                            
+                            <div id="performance-scroll-container" class="h-full mx-14" style="overflow-x: scroll; overflow-y: hidden;">
+                                <div style="min-width: max-content;">
+                                    <canvas id="performanceChart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Wskaźnik pozycji -->
+                            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-gray-200 dark:bg-gray-700 rounded-full px-4 py-1 text-sm">
+                                <span id="scroll-indicator">Przewiń ◄ ► aby zobaczyć wszystkie dni</span>
                             </div>
                         </div>
                     </div>

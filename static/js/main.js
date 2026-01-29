@@ -475,6 +475,29 @@ function updateChartsTheme(isDark) {
 let currentPerformanceSegments = ['Amazon', 'Reszta'];
 let currentPerformanceBrygada = 'All';
 
+// Funkcja przewijania wykresu wydajności
+function scrollPerformanceChart(delta) {
+    const container = document.getElementById('performance-scroll-container');
+    if (container) {
+        container.scrollBy({ left: delta, behavior: 'smooth' });
+        updateScrollIndicator();
+    }
+}
+
+// Aktualizacja wskaźnika pozycji
+function updateScrollIndicator() {
+    const container = document.getElementById('performance-scroll-container');
+    const indicator = document.getElementById('scroll-indicator');
+    if (container && indicator) {
+        const scrollLeft = container.scrollLeft;
+        const scrollWidth = container.scrollWidth - container.clientWidth;
+        if (scrollWidth > 0) {
+            const percent = Math.round((scrollLeft / scrollWidth) * 100);
+            indicator.textContent = `Pozycja: ${percent}% | ◄ ► przewiń`;
+        }
+    }
+}
+
 function createPerformanceChart(data) {
     const ctx = document.getElementById('performanceChart');
     if (!ctx) return;
@@ -489,24 +512,21 @@ function createPerformanceChart(data) {
     }
 
     const innerContainer = ctx.parentElement;
-    const scrollContainer = innerContainer ? innerContainer.parentElement : null;
+    const scrollContainer = document.getElementById('performance-scroll-container');
     if (!innerContainer || !scrollContainer) return;
 
-    // Kontener z scrollem
-    scrollContainer.style.height = '550px';
-    scrollContainer.style.minHeight = '550px';
-    scrollContainer.style.overflowX = 'auto';
-    scrollContainer.style.overflowY = 'hidden';
-    scrollContainer.style.position = 'relative';
-    
     // Wewnętrzny kontener - szerokość zawartości
     innerContainer.style.display = 'inline-block';
     innerContainer.style.minWidth = 'max-content';
 
-    // Auto-scroll do końca (najnowsze dane)
+    // Auto-scroll do końca (najnowsze dane) i aktualizuj wskaźnik
     setTimeout(() => {
         scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+        updateScrollIndicator();
     }, 100);
+    
+    // Nasłuchuj na przewijanie
+    scrollContainer.addEventListener('scroll', updateScrollIndicator);
 
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
