@@ -484,27 +484,13 @@ function createPerformanceChart(data) {
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
-    const datasets = data.series.map(s => {
-        const isLine = s.type === 'line';
-        return {
-            label: s.name,
-            data: s.data,
-            type: isLine ? 'line' : 'bar',
-            backgroundColor: isLine ? 'transparent' : s.color + 'CC',
-            borderColor: s.color,
-            borderWidth: isLine ? 3 : 1,
-            yAxisID: s.yaxis === 'y2' ? 'y2' : 'y',
-            tension: 0.3,
-            pointRadius: isLine ? 4 : 0,
-            pointBackgroundColor: s.color
-        };
-    });
-
-    // Obliczamy max z obu serii danych dla synchronizacji osi
-    let allValues = [];
-    data.series.forEach(s => allValues.push(...s.data.filter(v => v !== null)));
-    const globalMax = allValues.length > 0 ? Math.max(...allValues) : 10000;
-    const axisMax = Math.ceil(globalMax * 1.1 / 1000) * 1000; // Zaokrąglamy w górę do pełnego tysiąca z 10% marginesem
+    const chartWidth = Math.max(container.clientWidth, data.days.length * 120);
+    ctx.style.width = chartWidth + 'px';
+    ctx.style.height = '100%';
+    
+    // Zapewnij, że kontener ma scroll
+    container.style.overflowX = 'auto';
+    container.style.overflowY = 'hidden';
 
     charts.performance = new Chart(ctx, {
         type: 'bar',
@@ -513,7 +499,7 @@ function createPerformanceChart(data) {
             datasets: datasets 
         },
         options: {
-            responsive: true,
+            responsive: false,
             maintainAspectRatio: false,
             interaction: {
                 mode: 'index',
@@ -537,7 +523,7 @@ function createPerformanceChart(data) {
                     position: 'left', 
                     beginAtZero: true,
                     min: 0,
-                    max: axisMax, // Identyczna skala
+                    max: axisMax,
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
@@ -552,7 +538,7 @@ function createPerformanceChart(data) {
                     position: 'right', 
                     beginAtZero: true,
                     min: 0,
-                    max: axisMax, // Identyczna skala
+                    max: axisMax,
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
@@ -562,7 +548,13 @@ function createPerformanceChart(data) {
                     title: { display: true, text: 'm2/wh (Narastająca)', color: textColor, font: { size: 14 } }
                 },
                 x: { 
-                    ticks: { color: textColor, font: { size: 12 } }, 
+                    ticks: { 
+                        color: textColor, 
+                        font: { size: 12 },
+                        autoSkip: false,
+                        maxRotation: 45,
+                        minRotation: 45
+                    }, 
                     grid: { display: false } 
                 }
             }
