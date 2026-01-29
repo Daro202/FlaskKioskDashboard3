@@ -46,7 +46,7 @@ async function initializeApp() {
     await loadMachines();
     await loadInspirationsData();
     await loadSlidesData();
-    // NIE ładuj wydajności tutaj - załaduje się gdy sekcja będzie widoczna
+    await loadPerformanceData();
     
     startAutoRotation();
     
@@ -95,7 +95,6 @@ function showSection(sectionName) {
     
     const section = document.getElementById(`section-${sectionName}`);
     if (section) {
-        section.classList.remove('hidden');
         section.style.display = 'block';
         setTimeout(() => {
             section.classList.add('active');
@@ -113,11 +112,6 @@ function showSection(sectionName) {
         startSlideshow();
     } else {
         stopSlideshow();
-    }
-    
-    // Przeładuj wykres wydajności gdy sekcja staje się widoczna
-    if (sectionName === 'performance') {
-        setTimeout(() => loadPerformanceData(), 100);
     }
     
     resetRotationTimer();
@@ -479,13 +473,10 @@ let currentPerformanceBrygada = 'All';
 function createPerformanceChart(data) {
     const ctx = document.getElementById('performanceChart');
     if (!ctx) return;
-    
-    if (charts.performance) {
-        charts.performance.destroy();
-        charts.performance = null;
-    }
+    if (charts.performance) charts.performance.destroy();
 
-    if (!data || !data.series || data.series.length === 0 || !data.days || data.days.length === 0) {
+    if (!data || !data.series || data.series.length === 0) {
+        console.warn('Brak danych dla wykresu wydajności');
         return;
     }
 
@@ -509,11 +500,11 @@ function createPerformanceChart(data) {
         };
     });
 
-    // Obliczamy max dla synchronizacji osi
+    // Obliczamy max z obu serii danych dla synchronizacji osi
     let allValues = [];
     data.series.forEach(s => allValues.push(...s.data.filter(v => v !== null)));
     const globalMax = allValues.length > 0 ? Math.max(...allValues) : 10000;
-    const axisMax = Math.ceil(globalMax * 1.1 / 1000) * 1000;
+    const axisMax = Math.ceil(globalMax * 1.1 / 1000) * 1000; // Zaokrąglamy w górę do pełnego tysiąca z 10% marginesem
 
     charts.performance = new Chart(ctx, {
         type: 'bar',
@@ -524,7 +515,6 @@ function createPerformanceChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: false,
             interaction: {
                 mode: 'index',
                 intersect: false,
@@ -547,7 +537,7 @@ function createPerformanceChart(data) {
                     position: 'left', 
                     beginAtZero: true,
                     min: 0,
-                    max: axisMax,
+                    max: axisMax, // Identyczna skala
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
@@ -562,7 +552,7 @@ function createPerformanceChart(data) {
                     position: 'right', 
                     beginAtZero: true,
                     min: 0,
-                    max: axisMax,
+                    max: axisMax, // Identyczna skala
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
@@ -572,13 +562,7 @@ function createPerformanceChart(data) {
                     title: { display: true, text: 'm2/wh (Narastająca)', color: textColor, font: { size: 14 } }
                 },
                 x: { 
-                    ticks: { 
-                        color: textColor, 
-                        font: { size: 12 },
-                        autoSkip: false,
-                        maxRotation: 45,
-                        minRotation: 45
-                    }, 
+                    ticks: { color: textColor, font: { size: 12 } }, 
                     grid: { display: false } 
                 }
             }
@@ -587,15 +571,11 @@ function createPerformanceChart(data) {
 }
 
 async function loadPerformanceData() {
-    console.log('loadPerformanceData wywołane');
     const segmentsQuery = currentPerformanceSegments.map(s => `segments[]=${encodeURIComponent(s)}`).join('&');
     try {
         const response = await fetch(`/api/jumbo-data?${segmentsQuery}&brygada=${currentPerformanceBrygada}`);
         const data = await response.json();
-        console.log('Dane wydajności:', data.days ? data.days.length + ' dni' : 'brak');
-        if (data && data.series && data.series.length > 0) {
-            createPerformanceChart(data);
-        }
+        createPerformanceChart(data);
     } catch (error) {
         console.error('Błąd ładowania wydajności:', error);
     }

@@ -1079,17 +1079,25 @@ def get_jumbo_data():
         df = df.dropna(subset=["Dzień"])
         
         # 2. Filtrowanie: Respektujemy wybór brygady z dropdownu
+        # Jeśli brygada == "All", używamy tylko wierszy z Brygada == "All"
+        # Jeśli brygada != "All", używamy tylko wierszy konkretnej brygady (A, B lub C)
         brygada_selected = request.args.get('brygada', 'All')
-        filtered = df[(df["Segment"].isin(segments_selected)) & (df["Brygada"] == brygada_selected)].copy()
+        filtered = df[(df["Segment"].isin(segments_selected)) & (df["Brygada"] == brygada_selected)]
+        
+        # 3. Sortowanie
+        filtered = filtered.sort_values("Dzień")
         
         if filtered.empty:
             return jsonify({'series': [], 'days': []})
 
-        # 3. Generowanie pełnej osi czasu (wszystkie dni)
-        min_date = filtered["Dzień"].min()
+        # Ograniczenie do ostatnich 14 dni
         max_date = filtered["Dzień"].max()
-        all_dates = pd.date_range(start=min_date, end=max_date, freq='D')
-        unique_days_str = [d.strftime('%d.%m.%Y') for d in all_dates]
+        min_date = max_date - pd.Timedelta(days=14)
+        filtered = filtered[filtered["Dzień"] > min_date]
+
+        # 4. Przygotowanie osi X
+        unique_days = sorted(filtered["Dzień"].unique())
+        unique_days_str = [d.strftime('%d.%m.%Y') for d in pd.to_datetime(unique_days)]
         
         series_data = []
         kolory_slupki = {'Amazon': '#004E89', 'Reszta': '#15803d'}
@@ -1098,29 +1106,28 @@ def get_jumbo_data():
         for segment in segments_selected:
             seg_df = filtered[filtered["Segment"] == segment]
             
-            # Mapowanie danych do słownika dla szybkiego dostępu (data -> wartości)
-            data_map_daily = {row["Dzień"].strftime('%Y-%m-%d'): row["Prędkość dzienna [m2/wh]"] for _, row in seg_df.iterrows()}
-            data_map_cum = {row["Dzień"].strftime('%Y-%m-%d'): row["Narastająca prędkość [m2/wh]"] for _, row in seg_df.iterrows()}
-            
             seg_data_daily = []
             seg_data_cum = []
             
-            for d in all_dates:
-                d_str = d.strftime('%Y-%m-%d')
-                val_daily = data_map_daily.get(d_str)
-                val_cum = data_map_cum.get(d_str)
-                
-                # Dzienna: brak = 0 dla słupków
-                seg_data_daily.append(float(val_daily) if pd.notnull(val_daily) else 0)
-                # Narastająca: brak = None dla ciągłości linii (lub 0 jeśli wolisz)
-                seg_data_cum.append(float(val_cum) if pd.notnull(val_cum) else None)
+            for d in unique_days:
+                day_df = seg_df[seg_df["Dzień"] == d]
+                if not day_df.empty:
+                    # Bierzemy pierwszy (i jedyny dla All) wiersz - brak sumowania!
+                    val_daily = day_df["Prędkość dzienna [m2/wh]"].iloc[0]
+                    val_cum = day_df["Narastająca prędkość [m2/wh]"].iloc[0]
                     
-            if any(v != 0 for v in seg_data_daily) or any(v is not None for v in seg_data_cum):
+                    seg_data_daily.append(float(val_daily) if pd.notnull(val_daily) else None)
+                    seg_data_cum.append(float(val_cum) if pd.notnull(val_cum) else None)
+                else:
+                    seg_data_daily.append(None)
+                    seg_data_cum.append(None)
+                    
+            if any(v is not None for v in seg_data_daily) or any(v is not None for v in seg_data_cum):
                 # Dzienna
                 series_data.append({
                     'type': 'bar',
                     'name': f'{segment} – dzienna',
-                    'data': [round(v, 0) for v in seg_data_daily],
+                    'data': [round(v, 0) if v is not None else None for v in seg_data_daily],
                     'color': kolory_slupki.get(segment, '#999'),
                     'yaxis': 'y1'
                 })
