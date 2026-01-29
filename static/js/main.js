@@ -46,7 +46,7 @@ async function initializeApp() {
     await loadMachines();
     await loadInspirationsData();
     await loadSlidesData();
-    await loadPerformanceData();
+    // NIE ładuj wydajności tutaj - załaduje się gdy sekcja będzie widoczna
     
     startAutoRotation();
     
@@ -112,6 +112,11 @@ function showSection(sectionName) {
         startSlideshow();
     } else {
         stopSlideshow();
+    }
+    
+    // Przeładuj wykres wydajności gdy sekcja staje się widoczna
+    if (sectionName === 'performance') {
+        setTimeout(() => loadPerformanceData(), 100);
     }
     
     resetRotationTimer();
@@ -473,37 +478,20 @@ let currentPerformanceBrygada = 'All';
 function createPerformanceChart(data) {
     const ctx = document.getElementById('performanceChart');
     if (!ctx) return;
-    if (charts.performance) charts.performance.destroy();
+    
+    if (charts.performance) {
+        charts.performance.destroy();
+        charts.performance = null;
+    }
 
-    if (!data || !data.series || data.series.length === 0) {
-        console.warn('Brak danych dla wykresu wydajności');
+    if (!data || !data.series || data.series.length === 0 || !data.days || data.days.length === 0) {
         return;
     }
 
     const container = ctx.parentElement;
     if (!container) return;
 
-    // UPEWNIJ SIĘ ŻE KONTENER MA WYSOKOŚĆ
-    if (container.clientHeight === 0) {
-        container.style.height = '500px'; 
-        container.style.minHeight = '500px';
-    }
-
-    const isDark = document.documentElement.classList.contains('dark');
-    const textColor = isDark ? '#FFFFFF' : '#1F2937';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-
-    // Dynamiczne wymiary dla responsive: false
-    const chartWidth = Math.max(container.clientWidth, data.days.length * 100);
-    const chartHeight = 500; 
-
-    // Najpierw wymiary atrybutów, potem style, potem Chart
-    ctx.width = chartWidth;
-    ctx.height = chartHeight;
-    ctx.style.width = chartWidth + 'px';
-    ctx.style.height = chartHeight + 'px';
-    
-    // Wymuś overflow na rodzicu
+    // Wymuś wymiary kontenera
     container.style.height = '550px';
     container.style.minHeight = '550px';
     container.style.overflowX = 'auto';
@@ -511,24 +499,19 @@ function createPerformanceChart(data) {
     container.style.display = 'block';
     container.style.position = 'relative';
 
-    if (charts.performance) {
-        charts.performance.destroy();
-    }
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#FFFFFF' : '#1F2937';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
-    console.log('Performance Chart Debug:', {
-        width: ctx.width,
-        height: ctx.height,
-        labels: data.days.length,
-        series: data.series.length,
-        containerH: container.clientHeight
-    });
+    // Dynamiczne wymiary dla responsive: false (wszystkie dni widoczne)
+    const chartWidth = Math.max(800, data.days.length * 100);
+    const chartHeight = 500; 
 
-    console.log('Performance Chart Debug:', {
-        width: ctx.width,
-        height: ctx.height,
-        labels: data.days.length,
-        series: data.series.length
-    });
+    // Ustawienie wymiarów canvas PRZED inicjalizacją Chart
+    ctx.width = chartWidth;
+    ctx.height = chartHeight;
+    ctx.style.width = chartWidth + 'px';
+    ctx.style.height = chartHeight + 'px';
 
     const datasets = data.series.map(s => {
         const isLine = s.type === 'line';
@@ -628,7 +611,9 @@ async function loadPerformanceData() {
     try {
         const response = await fetch(`/api/jumbo-data?${segmentsQuery}&brygada=${currentPerformanceBrygada}`);
         const data = await response.json();
-        createPerformanceChart(data);
+        if (data && data.series && data.series.length > 0) {
+            createPerformanceChart(data);
+        }
     } catch (error) {
         console.error('Błąd ładowania wydajności:', error);
     }
