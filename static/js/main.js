@@ -475,29 +475,6 @@ function updateChartsTheme(isDark) {
 let currentPerformanceSegments = ['Amazon', 'Reszta'];
 let currentPerformanceBrygada = 'All';
 
-// Funkcja przewijania wykresu wydajności
-function scrollPerformanceChart(delta) {
-    const container = document.getElementById('performance-scroll-container');
-    if (container) {
-        container.scrollBy({ left: delta, behavior: 'smooth' });
-        updateScrollIndicator();
-    }
-}
-
-// Aktualizacja wskaźnika pozycji
-function updateScrollIndicator() {
-    const container = document.getElementById('performance-scroll-container');
-    const indicator = document.getElementById('scroll-indicator');
-    if (container && indicator) {
-        const scrollLeft = container.scrollLeft;
-        const scrollWidth = container.scrollWidth - container.clientWidth;
-        if (scrollWidth > 0) {
-            const percent = Math.round((scrollLeft / scrollWidth) * 100);
-            indicator.textContent = `Pozycja: ${percent}% | ◄ ► przewiń`;
-        }
-    }
-}
-
 function createPerformanceChart(data) {
     const ctx = document.getElementById('performanceChart');
     if (!ctx) return;
@@ -511,36 +488,9 @@ function createPerformanceChart(data) {
         return;
     }
 
-    const innerContainer = ctx.parentElement;
-    const scrollContainer = document.getElementById('performance-scroll-container');
-    if (!innerContainer || !scrollContainer) return;
-
-    // Wewnętrzny kontener - szerokość zawartości
-    innerContainer.style.display = 'inline-block';
-    innerContainer.style.minWidth = 'max-content';
-
-    // Auto-scroll do końca (najnowsze dane) i aktualizuj wskaźnik
-    setTimeout(() => {
-        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
-        updateScrollIndicator();
-    }, 100);
-    
-    // Nasłuchuj na przewijanie
-    scrollContainer.addEventListener('scroll', updateScrollIndicator);
-
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-
-    // Dynamiczne wymiary dla responsive: false (wszystkie dni widoczne)
-    const chartWidth = Math.max(800, data.days.length * 100);
-    const chartHeight = 500; 
-
-    // Ustawienie wymiarów canvas PRZED inicjalizacją Chart
-    ctx.width = chartWidth;
-    ctx.height = chartHeight;
-    ctx.style.width = chartWidth + 'px';
-    ctx.style.height = chartHeight + 'px';
 
     const datasets = data.series.map(s => {
         const isLine = s.type === 'line';
@@ -571,9 +521,9 @@ function createPerformanceChart(data) {
             datasets: datasets 
         },
         options: {
-            responsive: false,
+            responsive: true,
             maintainAspectRatio: false,
-            animation: false, // Szybszy render
+            animation: false,
             interaction: {
                 mode: 'index',
                 intersect: false,
