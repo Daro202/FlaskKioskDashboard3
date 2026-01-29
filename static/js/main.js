@@ -483,19 +483,45 @@ function createPerformanceChart(data) {
     const container = ctx.parentElement;
     if (!container) return;
 
+    // UPEWNIJ SIĘ ŻE KONTENER MA WYSOKOŚĆ
+    if (container.clientHeight === 0) {
+        container.style.height = '500px'; 
+        container.style.minHeight = '500px';
+    }
+
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
     // Dynamiczne wymiary dla responsive: false
-    const chartWidth = Math.max(container.clientWidth, data.days.length * 120);
-    const chartHeight = container.clientHeight > 100 ? container.clientHeight : 450;
+    const chartWidth = Math.max(container.clientWidth, data.days.length * 100);
+    const chartHeight = 500; 
 
     // Najpierw wymiary atrybutów, potem style, potem Chart
     ctx.width = chartWidth;
     ctx.height = chartHeight;
     ctx.style.width = chartWidth + 'px';
     ctx.style.height = chartHeight + 'px';
+    
+    // Wymuś overflow na rodzicu
+    container.style.height = '550px';
+    container.style.minHeight = '550px';
+    container.style.overflowX = 'auto';
+    container.style.overflowY = 'hidden';
+    container.style.display = 'block';
+    container.style.position = 'relative';
+
+    if (charts.performance) {
+        charts.performance.destroy();
+    }
+
+    console.log('Performance Chart Debug:', {
+        width: ctx.width,
+        height: ctx.height,
+        labels: data.days.length,
+        series: data.series.length,
+        containerH: container.clientHeight
+    });
 
     console.log('Performance Chart Debug:', {
         width: ctx.width,
