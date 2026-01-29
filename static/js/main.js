@@ -503,6 +503,11 @@ function createPerformanceChart(data) {
     innerContainer.style.display = 'inline-block';
     innerContainer.style.minWidth = 'max-content';
 
+    // Auto-scroll do końca (najnowsze dane)
+    setTimeout(() => {
+        scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+    }, 100);
+
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';

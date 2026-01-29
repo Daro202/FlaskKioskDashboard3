@@ -1,5 +1,42 @@
 /* Firmowy Kiosk - Style CSS */
 
+/* Pasek przewijania dla wykresu wydajności */
+.performance-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #FF6B35 #e5e7eb;
+}
+
+.performance-scroll::-webkit-scrollbar {
+    height: 12px;
+}
+
+.performance-scroll::-webkit-scrollbar-track {
+    background: #e5e7eb;
+    border-radius: 6px;
+}
+
+.performance-scroll::-webkit-scrollbar-thumb {
+    background: #FF6B35;
+    border-radius: 6px;
+    border: 2px solid #e5e7eb;
+}
+
+.performance-scroll::-webkit-scrollbar-thumb:hover {
+    background: #e55a2b;
+}
+
+.dark .performance-scroll {
+    scrollbar-color: #FF6B35 #374151;
+}
+
+.dark .performance-scroll::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+.dark .performance-scroll::-webkit-scrollbar-thumb {
+    border-color: #374151;
+}
+
 /* Zmienne kolorów - Stora Enso */
 :root {
     --color-primary: #FF6B35;
