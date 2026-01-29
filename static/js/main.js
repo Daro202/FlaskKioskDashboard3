@@ -480,17 +480,51 @@ function createPerformanceChart(data) {
         return;
     }
 
+    const container = ctx.parentElement;
+    if (!container) return;
+
     const isDark = document.documentElement.classList.contains('dark');
     const textColor = isDark ? '#FFFFFF' : '#1F2937';
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
+    // Dynamiczne wymiary dla responsive: false
     const chartWidth = Math.max(container.clientWidth, data.days.length * 120);
+    const chartHeight = container.clientHeight > 100 ? container.clientHeight : 450;
+
+    // Najpierw wymiary atrybutów, potem style, potem Chart
+    ctx.width = chartWidth;
+    ctx.height = chartHeight;
     ctx.style.width = chartWidth + 'px';
-    ctx.style.height = '100%';
-    
-    // Zapewnij, że kontener ma scroll
-    container.style.overflowX = 'auto';
-    container.style.overflowY = 'hidden';
+    ctx.style.height = chartHeight + 'px';
+
+    console.log('Performance Chart Debug:', {
+        width: ctx.width,
+        height: ctx.height,
+        labels: data.days.length,
+        series: data.series.length
+    });
+
+    const datasets = data.series.map(s => {
+        const isLine = s.type === 'line';
+        return {
+            label: s.name,
+            data: s.data,
+            type: isLine ? 'line' : 'bar',
+            backgroundColor: isLine ? 'transparent' : s.color + 'CC',
+            borderColor: s.color,
+            borderWidth: isLine ? 3 : 1,
+            yAxisID: s.yaxis === 'y2' ? 'y2' : 'y',
+            tension: 0.3,
+            pointRadius: isLine ? 4 : 0,
+            pointBackgroundColor: s.color
+        };
+    });
+
+    // Obliczamy max dla synchronizacji osi
+    let allValues = [];
+    data.series.forEach(s => allValues.push(...s.data.filter(v => v !== null)));
+    const globalMax = allValues.length > 0 ? Math.max(...allValues) : 10000;
+    const axisMax = Math.ceil(globalMax * 1.1 / 1000) * 1000;
 
     charts.performance = new Chart(ctx, {
         type: 'bar',
@@ -501,6 +535,7 @@ function createPerformanceChart(data) {
         options: {
             responsive: false,
             maintainAspectRatio: false,
+            animation: false, // Szybszy render
             interaction: {
                 mode: 'index',
                 intersect: false,
