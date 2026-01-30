@@ -990,7 +990,7 @@ def api_series():
     maszyna_df = df_long[df_long['Kod'] == kod][['Nazwa']].drop_duplicates()
     nazwa = maszyna_df.iloc[0]['Nazwa'] if not maszyna_df.empty else ''
     
-    # CEL: Pełna oś dni (1-31)
+    # CEL: Zawsze pełna oś dni 1-31
     all_days = list(range(1, 32))
     
     # Przygotuj dane dla wszystkich serii
@@ -1005,11 +1005,11 @@ def api_series():
         mask = (df_long['Typ'] == 'Dzienne') & (df_long['Kod'] == kod) & (df_long['Brygada'] == brygada)
         filtered = df_long[mask].copy()
         
-        # Tworzymy mapę dzień -> wartość
+        # Tworzymy mapę dzień -> wartość dla szybkiego dostępu
         day_map = dict(zip(filtered['Dzien'], filtered['Wartosc']))
         
-        # Budujemy pełną serię Y (jeśli brak danych -> 0)
-        y_values = [round(day_map.get(d, 0), 0) for d in all_days]
+        # Budujemy y_values na podstawie all_days (jeśli brak danych -> 0)
+        y_values = [round(float(day_map.get(d, 0)), 0) for d in all_days]
         
         series_data.append({
             'type': 'bar',
@@ -1028,8 +1028,8 @@ def api_series():
         # Tworzymy mapę dzień -> wartość
         day_map = dict(zip(filtered['Dzien'], filtered['Wartosc']))
         
-        # Budujemy pełną serię Y (jeśli brak danych -> 0)
-        y_values = [round(day_map.get(d, 0), 0) for d in all_days]
+        # Budujemy y_values na podstawie all_days (jeśli brak danych -> 0)
+        y_values = [round(float(day_map.get(d, 0)), 0) for d in all_days]
         
         series_data.append({
             'type': 'line',
