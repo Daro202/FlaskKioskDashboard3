@@ -586,10 +586,10 @@ async function loadPerformanceData() {
             
             slider.min = 0;
             slider.max = maxStart;
-            // Domyślnie ustawiamy na koniec (ostatnie 7 dni)
-            slider.value = maxStart;
+            // START OD PIERWSZYCH DNI
+            slider.value = 0;
             
-            updatePerformanceFromSlider(maxStart);
+            updatePerformanceFromSlider(0);
         } else {
             createPerformanceChart(data);
         }
