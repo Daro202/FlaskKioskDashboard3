@@ -580,15 +580,16 @@ async function loadPerformanceData() {
         
         const slider = document.getElementById('performance-slider');
         if (slider) {
-            // Suwak operuje na liczbie UNIKALNYCH dni (dat)
-            const uniqueDatesCount = [...new Set(data.days)].length;
-            slider.max = uniqueDatesCount;
-            slider.min = Math.min(1, uniqueDatesCount);
+            const uniqueDates = [...new Set(data.days)].sort((a, b) => new Date(a) - new Date(b));
+            const windowSize = 7;
+            const maxStart = Math.max(0, uniqueDates.length - windowSize);
             
-            // Domyślnie pokazujemy ostatnie 14 dni
-            const initialValue = Math.min(14, uniqueDatesCount);
-            slider.value = initialValue;
-            updatePerformanceFromSlider(initialValue);
+            slider.min = 0;
+            slider.max = maxStart;
+            // Domyślnie ustawiamy na koniec (ostatnie 7 dni)
+            slider.value = maxStart;
+            
+            updatePerformanceFromSlider(maxStart);
         } else {
             createPerformanceChart(data);
         }
@@ -597,20 +598,25 @@ async function loadPerformanceData() {
     }
 }
 
-function updatePerformanceFromSlider(numDays) {
+function updatePerformanceFromSlider(startIndex) {
     if (!performanceFullData) return;
-    
-    const label = document.getElementById('performance-slider-label');
-    if (label) label.textContent = `Ostatnie ${numDays} dni`;
+    startIndex = parseInt(startIndex);
     
     // 1. Pobierz unikalne daty i posortuj je rosnąco
     const uniqueDates = [...new Set(performanceFullData.days)]
         .sort((a, b) => new Date(a) - new Date(b));
     
-    // 2. Wybierz ostatnie N dni
-    const visibleDates = uniqueDates.slice(-numDays);
+    const windowSize = 7;
     
-    // 3. Znajdź indeksy wszystkich rekordów z wybranych dni
+    // 2. Wybierz okno dni (sliding window)
+    const visibleDates = uniqueDates.slice(startIndex, startIndex + windowSize);
+    
+    const label = document.getElementById('performance-slider-label');
+    if (label && visibleDates.length > 0) {
+        label.textContent = `Zakres: ${visibleDates[0]} do ${visibleDates[visibleDates.length - 1]}`;
+    }
+    
+    // 3. Znajdź indeksy rekordów z wybranych dni
     const indices = [];
     performanceFullData.days.forEach((date, idx) => {
         if (visibleDates.includes(date)) {
@@ -618,7 +624,7 @@ function updatePerformanceFromSlider(numDays) {
         }
     });
     
-    // 4. Przefiltruj dane (zachowując spójność dni)
+    // 4. Przefiltruj dane
     const slicedData = {
         days: indices.map(idx => performanceFullData.days[idx]),
         series: performanceFullData.series.map(s => ({
