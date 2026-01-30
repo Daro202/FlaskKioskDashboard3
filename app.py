@@ -990,8 +990,15 @@ def api_series():
     maszyna_df = df_long[df_long['Kod'] == kod][['Nazwa']].drop_duplicates()
     nazwa = maszyna_df.iloc[0]['Nazwa'] if not maszyna_df.empty else ''
     
-    # CEL: Zawsze pełna oś dni 1-31
-    all_days = list(range(1, 32))
+    # CEL: Dynamicznie wyliczana pełna oś dni z danych dla tej maszyny
+    df_maszyna_all = df_long[df_long['Kod'] == kod]
+    if not df_maszyna_all.empty:
+        min_d = int(df_maszyna_all['Dzien'].min())
+        max_d = int(df_maszyna_all['Dzien'].max())
+    else:
+        min_d, max_d = 1, 31
+        
+    all_days = list(range(min_d, max_d + 1))
     
     # Przygotuj dane dla wszystkich serii
     series_data = []
