@@ -580,16 +580,19 @@ async function loadPerformanceData() {
         
         const slider = document.getElementById('performance-slider');
         if (slider) {
-            const uniqueDates = [...new Set(data.days)].sort((a, b) => new Date(a) - new Date(b));
-            const windowSize = 7;
-            const maxStart = Math.max(0, uniqueDates.length - windowSize);
-            
-            slider.min = 0;
-            slider.max = maxStart;
-            // START OD PIERWSZYCH DNI
-            slider.value = 0;
-            
-            updatePerformanceFromSlider(0);
+            // Suwak operuje WYŁĄCZNIE na day_index z danych
+            const dayIndices = data.day_indices || [];
+            if (dayIndices.length > 0) {
+                const minIndex = Math.min(...dayIndices);
+                const maxIndex = Math.max(...dayIndices);
+                const windowSize = 7;
+                
+                slider.min = minIndex;
+                slider.max = Math.max(minIndex, maxIndex - windowSize + 1);
+                slider.value = minIndex;
+                
+                updatePerformanceFromSlider(minIndex);
+            }
         } else {
             createPerformanceChart(data);
         }
@@ -601,33 +604,22 @@ async function loadPerformanceData() {
 function updatePerformanceFromSlider(startIndex) {
     if (!performanceFullData) return;
     startIndex = parseInt(startIndex);
-    
-    // 1. Pobierz unikalne daty i posortuj je rosnąco
-    const uniqueDates = [...new Set(performanceFullData.days)]
-        .sort((a, b) => new Date(a) - new Date(b));
-    
     const windowSize = 7;
     
-    // 2. Wybierz okno dni logicznych (indeksów), ale pobierz odpowiadające im DATY
-    const visibleDates = uniqueDates.slice(startIndex, startIndex + windowSize);
-    
-    const label = document.getElementById('performance-slider-label');
-    if (label) {
-        // Suwak operuje na dniach logicznych (1, 2, 3...)
-        const startDayNum = startIndex + 1;
-        const endDayNum = startDayNum + (visibleDates.length > 0 ? visibleDates.length - 1 : windowSize - 1);
-        label.textContent = `Dni ${startDayNum}-${endDayNum}`;
-    }
-    
-    // 3. Filtruj pełne dane na podstawie wybranych DAT (aby na osi X były daty)
+    // Filtrowanie na podstawie kolumny technicznej day_index
     const indices = [];
-    performanceFullData.days.forEach((date, idx) => {
-        if (visibleDates.includes(date)) {
+    performanceFullData.day_indices.forEach((dIdx, idx) => {
+        if (dIdx >= startIndex && dIdx < startIndex + windowSize) {
             indices.push(idx);
         }
     });
     
-    // 4. Przygotuj dane do wykresu (zachowując daty na osi X)
+    const label = document.getElementById('performance-slider-label');
+    if (label) {
+        label.textContent = `Dni ${startIndex}-${startIndex + windowSize - 1}`;
+    }
+    
+    // Przygotuj dane do wykresu (zachowując Dzień/datę na osi X)
     const slicedData = {
         days: indices.map(idx => performanceFullData.days[idx]),
         series: performanceFullData.series.map(s => ({

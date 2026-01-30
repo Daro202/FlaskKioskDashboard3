@@ -1119,6 +1119,12 @@ def get_jumbo_data():
         unique_days = sorted(filtered["Dzień"].unique())
         unique_days_str = [d.strftime('%d.%m.%Y') for d in pd.to_datetime(unique_days)]
         
+        # Pobieramy day_index dla każdego unikalnego dnia (powinien być ten sam dla wszystkich segmentów w danym dniu)
+        day_indices = []
+        for d in unique_days:
+            idx_val = filtered[filtered["Dzień"] == d]["day_index"].iloc[0]
+            day_indices.append(int(idx_val))
+
         series_data = []
         kolory_slupki = {'Amazon': '#004E89', 'Reszta': '#15803d'}
         kolory_narastajace = {'Amazon': '#FF6B35', 'Reszta': '#38bdf8'}
@@ -1162,7 +1168,8 @@ def get_jumbo_data():
 
         return jsonify({
             'series': series_data,
-            'days': unique_days_str
+            'days': unique_days_str,
+            'day_indices': day_indices
         })
     except Exception as e:
         print(f"Błąd API jumbo: {e}")
