@@ -613,7 +613,10 @@ function updatePerformanceFromSlider(startIndex) {
     
     const label = document.getElementById('performance-slider-label');
     if (label && visibleDates.length > 0) {
-        label.textContent = `Zakres: ${visibleDates[0]} do ${visibleDates[visibleDates.length - 1]}`;
+        // Zmiana formatu etykiety na "Dni X-Y" dla spójności
+        const startDayNum = startIndex + 1;
+        const endDayNum = startDayNum + visibleDates.length - 1;
+        label.textContent = `Dni ${startDayNum}-${endDayNum}`;
     }
     
     // 3. Znajdź indeksy rekordów z wybranych dni
