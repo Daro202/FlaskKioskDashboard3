@@ -589,8 +589,9 @@ async function loadPerformanceData() {
                 
                 slider.min = minIndex;
                 slider.max = Math.max(minIndex, maxIndex - windowSize + 1);
-                slider.value = minIndex;
                 
+                // KRYTYCZNE: START OD PIERWSZEGO DOSTĘPNEGO DNIA (minIndex)
+                slider.value = minIndex;
                 updatePerformanceFromSlider(minIndex);
             }
         } else {
