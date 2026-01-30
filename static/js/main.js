@@ -608,18 +608,18 @@ function updatePerformanceFromSlider(startIndex) {
     
     const windowSize = 7;
     
-    // 2. Wybierz okno dni (sliding window)
+    // 2. Wybierz okno dni logicznych (indeksów), ale pobierz odpowiadające im DATY
     const visibleDates = uniqueDates.slice(startIndex, startIndex + windowSize);
     
     const label = document.getElementById('performance-slider-label');
-    if (label && visibleDates.length > 0) {
-        // Zmiana formatu etykiety na "Dni X-Y" dla spójności
+    if (label) {
+        // Suwak operuje na dniach logicznych (1, 2, 3...)
         const startDayNum = startIndex + 1;
-        const endDayNum = startDayNum + visibleDates.length - 1;
+        const endDayNum = startDayNum + (visibleDates.length > 0 ? visibleDates.length - 1 : windowSize - 1);
         label.textContent = `Dni ${startDayNum}-${endDayNum}`;
     }
     
-    // 3. Znajdź indeksy rekordów z wybranych dni
+    // 3. Filtruj pełne dane na podstawie wybranych DAT (aby na osi X były daty)
     const indices = [];
     performanceFullData.days.forEach((date, idx) => {
         if (visibleDates.includes(date)) {
@@ -627,7 +627,7 @@ function updatePerformanceFromSlider(startIndex) {
         }
     });
     
-    // 4. Przefiltruj dane
+    // 4. Przygotuj dane do wykresu (zachowując daty na osi X)
     const slicedData = {
         days: indices.map(idx => performanceFullData.days[idx]),
         series: performanceFullData.series.map(s => ({
