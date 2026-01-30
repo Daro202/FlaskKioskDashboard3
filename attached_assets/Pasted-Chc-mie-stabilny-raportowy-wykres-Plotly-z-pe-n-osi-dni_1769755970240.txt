@@ -1,0 +1,69 @@
+Chcę mieć stabilny, raportowy wykres Plotly z pełną osią dni
+oraz suwakiem zakresu czasu.
+
+Kontekst:
+- backend: Flask (endpoint /api/series)
+- frontend: Plotly
+- oś X: dni jako liczby (np. 1–31)
+- aplikacja działa w trybie kiosk / offline
+- obecnie wykres ma „dziury”, bo backend zwraca tylko dni z danymi
+
+CEL:
+Wykres ma zawsze pokazywać WSZYSTKIE DNI w zakresie
+od pierwszego do ostatniego dnia, nawet jeśli w danym dniu
+nie było produkcji, oraz umożliwiać zawężanie widoku suwakiem.
+
+--------------------------------------------------
+A. BACKEND (Flask – api_series)
+--------------------------------------------------
+
+1. Dla wybranego kodu maszyny:
+   - wylicz min_dzien i max_dzien
+   - zbuduj pełną listę dni:
+     all_days = [min_dzien, min_dzien+1, ..., max_dzien]
+
+2. Dla KAŻDEJ serii danych (słupki / linie):
+   - zbuduj mapę dzień → wartość
+   - x MUSI być zawsze = all_days
+   - y MUSI zawierać wartość dla każdego dnia
+     (jeśli brak danych → 0)
+
+3. NIE filtruj dni bez danych
+4. NIE agreguj po tygodniach
+5. NIE zmieniaj logiki frontendu
+
+Efekt backendu:
+- każda seria ma identyczną oś X
+- brakujące dni są jawnie widoczne jako 0
+
+--------------------------------------------------
+B. FRONTEND (Plotly)
+--------------------------------------------------
+
+1. Oś X:
+   - typ: 'linear' (dni są liczbami)
+   - NIE używaj 'date'
+
+2. Dodaj suwak (range slider):
+   - xaxis.rangeslider.visible = true
+   - suwak ma obejmować CAŁY zakres dni
+   - przesuwanie suwaka:
+     • zawęża widok
+     • NIE zmienia danych
+     • NIE robi requestów API
+
+3. Układ:
+   - zapewnij miejsce na suwak (margin-bottom)
+   - nie używaj scrolla poziomego
+
+--------------------------------------------------
+C. EFEKT KOŃCOWY
+--------------------------------------------------
+
+- oś X jest ciągła (dni 1,2,3… bez przeskoków)
+- dni bez produkcji są widoczne jako 0
+- użytkownik może:
+  • zobaczyć cały okres
+  • zawęzić zakres suwakiem
+- wykres jest stabilny, czytelny i raportowy
+- rozwiązanie działa w trybie kiosk / offline

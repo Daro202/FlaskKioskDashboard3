@@ -171,20 +171,27 @@
                             }
                         },
                         xaxis: {
-                            title: '',
+                            title: 'Dzień miesiąca',
                             showgrid: true,
                             gridcolor: '#e5e7eb',
-                            dtick: 1
+                            dtick: 1,
+                            type: 'linear',
+                            range: [1, 31],
+                            rangeslider: {
+                                visible: true,
+                                bgcolor: '#f9fafb',
+                                thickness: 0.15
+                            }
                         },
                         yaxis: {
-                            title: 'Produkcja dzienna',
+                            title: 'Produkcja dzienna [m2/wh]',
                             showgrid: true,
                             gridcolor: '#e5e7eb',
                             side: 'left',
                             range: [0, maxValue]
                         },
                         yaxis2: {
-                            title: 'Produkcja narastająca',
+                            title: 'Produkcja narastająca [m2/wh]',
                             showgrid: false,
                             overlaying: 'y',
                             side: 'right',
@@ -195,10 +202,16 @@
                         hovermode: 'x unified',
                         barmode: 'group',
                         showlegend: true,
+                        margin: {
+                            b: 150, // Większy margines dolny na suwak
+                            t: 80,
+                            l: 80,
+                            r: 80
+                        },
                         legend: {
                             orientation: 'h',
                             yanchor: 'bottom',
-                            y: -0.2,
+                            y: -0.4, // Przesunięcie legendy pod suwak
                             xanchor: 'center',
                             x: 0.5
                         }

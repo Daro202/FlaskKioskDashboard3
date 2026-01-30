@@ -990,6 +990,9 @@ def api_series():
     maszyna_df = df_long[df_long['Kod'] == kod][['Nazwa']].drop_duplicates()
     nazwa = maszyna_df.iloc[0]['Nazwa'] if not maszyna_df.empty else ''
     
+    # CEL: Pełna oś dni (1-31)
+    all_days = list(range(1, 32))
+    
     # Przygotuj dane dla wszystkich serii
     series_data = []
     
@@ -1000,32 +1003,42 @@ def api_series():
     # Słupki dla wartości dziennych (brygady A, B, C) - oś Y lewa
     for brygada in ['A', 'B', 'C']:
         mask = (df_long['Typ'] == 'Dzienne') & (df_long['Kod'] == kod) & (df_long['Brygada'] == brygada)
-        filtered = df_long[mask].copy().sort_values('Dzien')
+        filtered = df_long[mask].copy()
         
-        if not filtered.empty:
-            series_data.append({
-                'type': 'bar',
-                'name': brygada,
-                'x': filtered['Dzien'].tolist(),
-                'y': filtered['Wartosc'].tolist(),
-                'color': kolory_slupki.get(brygada, '#999999'),
-                'yaxis': 'y'
-            })
+        # Tworzymy mapę dzień -> wartość
+        day_map = dict(zip(filtered['Dzien'], filtered['Wartosc']))
+        
+        # Budujemy pełną serię Y (jeśli brak danych -> 0)
+        y_values = [round(day_map.get(d, 0), 0) for d in all_days]
+        
+        series_data.append({
+            'type': 'bar',
+            'name': brygada,
+            'x': all_days,
+            'y': y_values,
+            'color': kolory_slupki.get(brygada, '#999999'),
+            'yaxis': 'y'
+        })
     
     # Linie dla wartości narastających (brygady A, B, C) - oś Y prawa
     for brygada in ['A', 'B', 'C']:
         mask = (df_long['Typ'] == 'Narastające') & (df_long['Kod'] == kod) & (df_long['Brygada'] == brygada)
-        filtered = df_long[mask].copy().sort_values('Dzien')
+        filtered = df_long[mask].copy()
         
-        if not filtered.empty:
-            series_data.append({
-                'type': 'line',
-                'name': f'Narastająco {brygada}',
-                'x': filtered['Dzien'].tolist(),
-                'y': filtered['Wartosc'].tolist(),
-                'color': kolory_linie.get(brygada, '#666666'),
-                'yaxis': 'y2'
-            })
+        # Tworzymy mapę dzień -> wartość
+        day_map = dict(zip(filtered['Dzien'], filtered['Wartosc']))
+        
+        # Budujemy pełną serię Y (jeśli brak danych -> 0)
+        y_values = [round(day_map.get(d, 0), 0) for d in all_days]
+        
+        series_data.append({
+            'type': 'line',
+            'name': f'Narastająco {brygada}',
+            'x': all_days,
+            'y': y_values,
+            'color': kolory_linie.get(brygada, '#666666'),
+            'yaxis': 'y2'
+        })
     
     return jsonify({
         'series': series_data,
