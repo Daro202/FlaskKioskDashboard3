@@ -580,11 +580,13 @@ async function loadPerformanceData() {
         
         const slider = document.getElementById('performance-slider');
         if (slider) {
-            const numRecords = data.days.length;
-            slider.max = numRecords;
-            slider.min = Math.min(3, numRecords);
-            // Inicjalnie pokazujemy ostatnie 14 dni lub tyle ile jest danych
-            const initialValue = Math.min(14, numRecords);
+            // Suwak operuje na liczbie UNIKALNYCH dni (dat)
+            const uniqueDatesCount = [...new Set(data.days)].length;
+            slider.max = uniqueDatesCount;
+            slider.min = Math.min(1, uniqueDatesCount);
+            
+            // Domyślnie pokazujemy ostatnie 14 dni
+            const initialValue = Math.min(14, uniqueDatesCount);
             slider.value = initialValue;
             updatePerformanceFromSlider(initialValue);
         } else {
@@ -599,15 +601,29 @@ function updatePerformanceFromSlider(numDays) {
     if (!performanceFullData) return;
     
     const label = document.getElementById('performance-slider-label');
-    if (label) label.textContent = `Ostatnie ${numDays} rekordów`;
+    if (label) label.textContent = `Ostatnie ${numDays} dni`;
     
-    const sliceStart = Math.max(0, performanceFullData.days.length - numDays);
+    // 1. Pobierz unikalne daty i posortuj je rosnąco
+    const uniqueDates = [...new Set(performanceFullData.days)]
+        .sort((a, b) => new Date(a) - new Date(b));
     
+    // 2. Wybierz ostatnie N dni
+    const visibleDates = uniqueDates.slice(-numDays);
+    
+    // 3. Znajdź indeksy wszystkich rekordów z wybranych dni
+    const indices = [];
+    performanceFullData.days.forEach((date, idx) => {
+        if (visibleDates.includes(date)) {
+            indices.push(idx);
+        }
+    });
+    
+    // 4. Przefiltruj dane (zachowując spójność dni)
     const slicedData = {
-        days: performanceFullData.days.slice(sliceStart),
+        days: indices.map(idx => performanceFullData.days[idx]),
         series: performanceFullData.series.map(s => ({
             ...s,
-            data: s.data.slice(sliceStart)
+            data: indices.map(idx => s.data[idx])
         }))
     };
     
