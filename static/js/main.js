@@ -616,7 +616,13 @@ function updatePerformanceFromSlider(startIndex) {
     
     const label = document.getElementById('performance-slider-label');
     if (label) {
-        label.textContent = `Dni ${startIndex}-${startIndex + windowSize - 1}`;
+        // Pobranie dat dla aktualnego okna
+        const currentDays = indices.map(idx => performanceFullData.days[idx]);
+        if (currentDays.length > 0) {
+            const firstDate = currentDays[0];
+            const lastDate = currentDays[currentDays.length - 1];
+            label.innerHTML = `Zakres: ${firstDate} – ${lastDate} <br><span class="text-xs opacity-75">(dni produkcyjne)</span>`;
+        }
     }
     
     // Przygotuj dane do wykresu (zachowując Dzień/datę na osi X)
