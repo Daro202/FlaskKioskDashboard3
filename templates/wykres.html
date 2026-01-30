@@ -166,12 +166,16 @@
                         title: {
                             text: data.nazwa ? `${data.kod} ${data.nazwa}` : data.kod,
                             font: {
-                                size: 20,
-                                family: 'Roboto, sans-serif'
+                                size: 24,
+                                family: 'Roboto, sans-serif',
+                                weight: 'bold'
                             }
                         },
                         xaxis: {
-                            title: 'Dzień miesiąca',
+                            title: {
+                                text: 'Dzień miesiąca',
+                                font: { size: 18 }
+                            },
                             showgrid: true,
                             gridcolor: '#e5e7eb',
                             dtick: 1,
@@ -179,23 +183,34 @@
                             range: [1, 31],
                             rangeslider: {
                                 visible: true,
-                                bgcolor: '#f9fafb',
-                                thickness: 0.15
-                            }
+                                bgcolor: '#f3f4f6',
+                                thickness: 0.15,
+                                bordercolor: '#d1d5db',
+                                borderwidth: 1
+                            },
+                            tickfont: { size: 14 }
                         },
                         yaxis: {
-                            title: 'Produkcja dzienna [m2/wh]',
+                            title: {
+                                text: 'Produkcja dzienna [m2/wh]',
+                                font: { size: 16 }
+                            },
                             showgrid: true,
                             gridcolor: '#e5e7eb',
                             side: 'left',
-                            range: [0, maxValue]
+                            range: [0, maxValue],
+                            tickfont: { size: 14 }
                         },
                         yaxis2: {
-                            title: 'Produkcja narastająca [m2/wh]',
+                            title: {
+                                text: 'Produkcja narastająca [m2/wh]',
+                                font: { size: 16 }
+                            },
                             showgrid: false,
                             overlaying: 'y',
                             side: 'right',
-                            range: [0, maxValue]
+                            range: [0, maxValue],
+                            tickfont: { size: 14 }
                         },
                         plot_bgcolor: 'white',
                         paper_bgcolor: 'white',
@@ -203,17 +218,18 @@
                         barmode: 'group',
                         showlegend: true,
                         margin: {
-                            b: 150, // Większy margines dolny na suwak
-                            t: 80,
+                            b: 150,
+                            t: 100,
                             l: 80,
                             r: 80
                         },
                         legend: {
                             orientation: 'h',
-                            yanchor: 'bottom',
-                            y: -0.4, // Przesunięcie legendy pod suwak
+                            yanchor: 'top',
+                            y: -0.45,
                             xanchor: 'center',
-                            x: 0.5
+                            x: 0.5,
+                            font: { size: 14 }
                         }
                     };
                     
