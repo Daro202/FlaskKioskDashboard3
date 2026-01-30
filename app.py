@@ -1104,16 +1104,11 @@ def get_jumbo_data():
         brygada_selected = request.args.get('brygada', 'All')
         filtered = df[(df["Segment"].isin(segments_selected)) & (df["Brygada"] == brygada_selected)]
         
-        # 3. Sortowanie
+        # 3. Sortowanie i usunięcie ograniczenia do ostatnich 14 dni
         filtered = filtered.sort_values("Dzień")
         
         if filtered.empty:
             return jsonify({'series': [], 'days': []})
-
-        # Ograniczenie do ostatnich 14 dni
-        max_date = filtered["Dzień"].max()
-        min_date = max_date - pd.Timedelta(days=14)
-        filtered = filtered[filtered["Dzień"] > min_date]
 
         # 4. Przygotowanie osi X
         unique_days = sorted(filtered["Dzień"].unique())
