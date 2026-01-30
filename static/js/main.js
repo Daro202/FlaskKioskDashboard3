@@ -469,6 +469,7 @@ function updateChartsTheme(isDark) {
 
 let currentPerformanceSegments = ['Amazon', 'Reszta'];
 let currentPerformanceBrygada = 'All';
+let performanceFullData = null;
 
 function createPerformanceChart(data) {
     const ctx = document.getElementById('performanceChart');
@@ -500,11 +501,10 @@ function createPerformanceChart(data) {
         };
     });
 
-    // Obliczamy max z obu serii danych dla synchronizacji osi
     let allValues = [];
     data.series.forEach(s => allValues.push(...s.data.filter(v => v !== null)));
     const globalMax = allValues.length > 0 ? Math.max(...allValues) : 10000;
-    const axisMax = Math.ceil(globalMax * 1.1 / 1000) * 1000; // Zaokrąglamy w górę do pełnego tysiąca z 10% marginesem
+    const axisMax = Math.ceil(globalMax * 1.1 / 1000) * 1000;
 
     charts.performance = new Chart(ctx, {
         type: 'bar',
@@ -515,6 +515,7 @@ function createPerformanceChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 400 },
             interaction: {
                 mode: 'index',
                 intersect: false,
@@ -537,7 +538,7 @@ function createPerformanceChart(data) {
                     position: 'left', 
                     beginAtZero: true,
                     min: 0,
-                    max: axisMax, // Identyczna skala
+                    max: axisMax,
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
@@ -552,7 +553,7 @@ function createPerformanceChart(data) {
                     position: 'right', 
                     beginAtZero: true,
                     min: 0,
-                    max: axisMax, // Identyczna skala
+                    max: axisMax,
                     ticks: { 
                         color: textColor, 
                         font: { size: 12 },
@@ -575,10 +576,42 @@ async function loadPerformanceData() {
     try {
         const response = await fetch(`/api/jumbo-data?${segmentsQuery}&brygada=${currentPerformanceBrygada}`);
         const data = await response.json();
-        createPerformanceChart(data);
+        performanceFullData = data;
+        
+        const slider = document.getElementById('performance-slider');
+        if (slider) {
+            const numRecords = data.days.length;
+            slider.max = numRecords;
+            slider.min = Math.min(3, numRecords);
+            // Inicjalnie pokazujemy ostatnie 14 dni lub tyle ile jest danych
+            const initialValue = Math.min(14, numRecords);
+            slider.value = initialValue;
+            updatePerformanceFromSlider(initialValue);
+        } else {
+            createPerformanceChart(data);
+        }
     } catch (error) {
         console.error('Błąd ładowania wydajności:', error);
     }
+}
+
+function updatePerformanceFromSlider(numDays) {
+    if (!performanceFullData) return;
+    
+    const label = document.getElementById('performance-slider-label');
+    if (label) label.textContent = `Ostatnie ${numDays} rekordów`;
+    
+    const sliceStart = Math.max(0, performanceFullData.days.length - numDays);
+    
+    const slicedData = {
+        days: performanceFullData.days.slice(sliceStart),
+        series: performanceFullData.series.map(s => ({
+            ...s,
+            data: s.data.slice(sliceStart)
+        }))
+    };
+    
+    createPerformanceChart(slicedData);
 }
 
 // Inicjalizacja filtrów wydajności
@@ -591,6 +624,12 @@ document.addEventListener('change', (e) => {
     if (e.target.id === 'performance-brygada') {
         currentPerformanceBrygada = e.target.value;
         loadPerformanceData();
+    }
+});
+
+document.addEventListener('input', (e) => {
+    if (e.target.id === 'performance-slider') {
+        updatePerformanceFromSlider(parseInt(e.target.value));
     }
 });
 

@@ -187,6 +187,11 @@
                             <div class="flex justify-between items-center mb-4">
                                 <h2 class="text-4xl font-bold text-gray-800 dark:text-white">Wydajność Produkcji</h2>
                                 <div class="flex gap-8 items-center">
+                                    <!-- Suwak Wydajności -->
+                                    <div class="flex flex-col space-y-1 min-w-[200px] bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-xl shadow-inner">
+                                        <label id="performance-slider-label" class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ostatnie 14 rekordów</label>
+                                        <input type="range" id="performance-slider" min="3" max="31" value="14" class="w-full h-1.5 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-orange-500">
+                                    </div>
                                     <div class="flex gap-4 items-center bg-gray-100 dark:bg-gray-700 px-6 py-3 rounded-xl shadow-inner">
                                         <label class="flex items-center gap-3 cursor-pointer">
                                             <input type="checkbox" name="segment" value="Amazon" checked class="w-6 h-6 accent-orange-500">
