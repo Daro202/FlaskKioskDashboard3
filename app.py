@@ -210,12 +210,15 @@ def get_slide_images():
         return []
     
     images = []
-    for filename in os.listdir(images_path):
-        if allowed_file(filename):
-            images.append({
-                'url': f'/static/images/{filename}',
-                'name': filename
-            })
+    # Sortuj pliki wg daty modyfikacji (najnowsze pierwsze)
+    files = [f for f in os.listdir(images_path) if allowed_file(f)]
+    files.sort(key=lambda x: os.path.getmtime(os.path.join(images_path, x)), reverse=True)
+    
+    for filename in files:
+        images.append({
+            'url': f'/static/images/{filename}',
+            'name': filename
+        })
     return images
 
 def get_current_quiz_question():
