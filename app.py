@@ -730,6 +730,38 @@ def reorder_slide():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/upload-jumbo', methods=['POST'])
+def upload_jumbo():
+    """Upload pliku Excel (Jumbo.xlsx)"""
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Brak autoryzacji'}), 401
+    
+    if 'excel_file' not in request.files:
+        return jsonify({'error': 'Brak pliku w żądaniu'}), 400
+    
+    file = request.files['excel_file']
+    if file.filename == '':
+        return jsonify({'error': 'Nie wybrano pliku'}), 400
+    
+    if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+        try:
+            filepath = 'Jumbo.xlsx'
+            file.save(filepath)
+            
+            df_check = pd.read_excel(filepath, engine='openpyxl')
+            if df_check.empty:
+                return jsonify({'error': 'Plik został zapisany, ale wydaje się pusty lub ma nieprawidłową strukturę.'}), 200
+            
+            return jsonify({
+                'success': True,
+                'message': f'Plik Jumbo.xlsx został zaktualizowany ({len(df_check)} wierszy)',
+                'filename': 'Jumbo.xlsx'
+            })
+        except Exception as e:
+            return jsonify({'error': f'Błąd podczas zapisywania pliku: {str(e)}'}), 500
+    
+    return jsonify({'error': 'Niedozwolony typ pliku. Wymagany .xlsx lub .xls'}), 400
+
 @app.route('/api/upload-excel', methods=['POST'])
 def upload_excel():
     """Upload pliku Excel (Export.xlsx)"""
