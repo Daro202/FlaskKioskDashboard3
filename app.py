@@ -477,13 +477,16 @@ def admin():
         
         conn.close()
         
+        slides = get_slide_images()
+        
         return render_template('admin.html',
                              authenticated=True,
                              header_title=settings_dict.get('header_title', ''),
                              footer_note=settings_dict.get('footer_note', ''),
                              about_text=settings_dict.get('about_text', ''),
                              inspirations=inspirations,
-                             pages=pages)
+                             pages=pages,
+                             slides=slides)
     except Exception as e:
         print(f"BŁĄD W ADMIN: {str(e)}")
         import traceback
