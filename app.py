@@ -207,18 +207,24 @@ def get_slide_images():
     """Pobierz listę zdjęć do pokazu slajdów"""
     images_path = os.path.join(app.config['UPLOAD_FOLDER'])
     if not os.path.exists(images_path):
+        os.makedirs(images_path, exist_ok=True)
         return []
     
     images = []
     # Sortuj pliki wg daty modyfikacji (najnowsze pierwsze)
-    files = [f for f in os.listdir(images_path) if allowed_file(f)]
-    files.sort(key=lambda x: os.path.getmtime(os.path.join(images_path, x)), reverse=True)
-    
-    for filename in files:
-        images.append({
-            'url': f'/static/images/{filename}',
-            'name': filename
-        })
+    try:
+        files = [f for f in os.listdir(images_path) if allowed_file(f)]
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(images_path, x)), reverse=True)
+        
+        for filename in files:
+            images.append({
+                'url': url_for('static', filename='images/' + filename),
+                'name': filename
+            })
+    except Exception as e:
+        print(f"Błąd podczas pobierania zdjęć: {e}")
+        
+    print("Slide images:", images)
     return images
 
 def get_current_quiz_question():
