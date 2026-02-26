@@ -63,6 +63,12 @@ def init_db():
                   title TEXT,
                   is_visible INTEGER DEFAULT 1)''')
     
+    # Tabela z kolejnością slajdów
+    c.execute('''CREATE TABLE IF NOT EXISTS slide_order
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  filename TEXT UNIQUE,
+                  position INTEGER DEFAULT 0)''')
+    
     # Wstaw domyślne ustawienia jeśli nie istnieją
     c.execute("SELECT COUNT(*) FROM settings")
     if c.fetchone()[0] == 0:
@@ -203,28 +209,73 @@ def get_chart_data_for_machine(kod='1310', start_day=1):
         print(f"Błąd wczytywania danych dla maszyny {kod}: {e}")
         return {'series': []}
 
+def sync_slide_order():
+    """Synchronizuj tabelę slide_order z rzeczywistymi plikami na dysku"""
+    images_path = os.path.join(app.config['UPLOAD_FOLDER'])
+    if not os.path.exists(images_path):
+        os.makedirs(images_path, exist_ok=True)
+        return
+    
+    # Ignoruj pliki które nie są slajdami (loga, placeholdery)
+    excluded = {'storaenso_logo.png', 'story-logo.png', 'placeholder1.jpg', 'placeholder2.jpg', 'placeholder3.jpg'}
+    disk_files = set(f for f in os.listdir(images_path) 
+                     if allowed_file(f) and f not in excluded and not os.path.isdir(os.path.join(images_path, f)))
+    
+    conn = sqlite3.connect('kiosk.db')
+    c = conn.cursor()
+    
+    c.execute("SELECT filename FROM slide_order")
+    db_files = set(row[0] for row in c.fetchall())
+    
+    # Usuń z DB pliki których nie ma na dysku
+    removed = db_files - disk_files
+    for f in removed:
+        c.execute("DELETE FROM slide_order WHERE filename=?", (f,))
+    
+    # Dodaj nowe pliki z dysku (na końcu listy, posortowane wg daty modyfikacji)
+    added = disk_files - db_files
+    if added:
+        c.execute("SELECT COALESCE(MAX(position), 0) FROM slide_order")
+        max_pos = c.fetchone()[0]
+        added_sorted = sorted(added, key=lambda x: os.path.getmtime(os.path.join(images_path, x)))
+        for i, f in enumerate(added_sorted):
+            c.execute("INSERT OR IGNORE INTO slide_order (filename, position) VALUES (?, ?)", 
+                     (f, max_pos + i + 1))
+    
+    # Normalizuj pozycje (zamknij luki po usunięciach)
+    c.execute("SELECT filename FROM slide_order ORDER BY position ASC")
+    all_files = [row[0] for row in c.fetchall()]
+    for i, fname in enumerate(all_files):
+        c.execute("UPDATE slide_order SET position=? WHERE filename=?", (i + 1, fname))
+    
+    conn.commit()
+    conn.close()
+
 def get_slide_images():
-    """Pobierz listę zdjęć do pokazu slajdów"""
+    """Pobierz listę zdjęć do pokazu slajdów posortowaną wg kolejności"""
     images_path = os.path.join(app.config['UPLOAD_FOLDER'])
     if not os.path.exists(images_path):
         os.makedirs(images_path, exist_ok=True)
         return []
     
+    sync_slide_order()
+    
+    conn = sqlite3.connect('kiosk.db')
+    c = conn.cursor()
+    c.execute("SELECT filename, position FROM slide_order ORDER BY position ASC")
+    rows = c.fetchall()
+    conn.close()
+    
     images = []
-    # Sortuj pliki wg daty modyfikacji (najnowsze pierwsze)
-    try:
-        files = [f for f in os.listdir(images_path) if allowed_file(f)]
-        files.sort(key=lambda x: os.path.getmtime(os.path.join(images_path, x)), reverse=True)
-        
-        for filename in files:
+    for filename, position in rows:
+        filepath = os.path.join(images_path, filename)
+        if os.path.exists(filepath):
             images.append({
                 'url': url_for('static', filename='images/' + filename),
-                'name': filename
+                'name': filename,
+                'position': position
             })
-    except Exception as e:
-        print(f"Błąd podczas pobierania zdjęć: {e}")
-        
-    print("Slide images:", images)
+    
     return images
 
 def get_current_quiz_question():
@@ -612,9 +663,70 @@ def delete_slide(filename):
         
         if os.path.exists(filepath):
             os.remove(filepath)
+            # Usuń też z tabeli kolejności
+            conn = sqlite3.connect('kiosk.db')
+            c = conn.cursor()
+            c.execute("DELETE FROM slide_order WHERE filename=?", (filename,))
+            conn.commit()
+            conn.close()
             return jsonify({'success': True})
         else:
             return jsonify({'error': 'Plik nie istnieje'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/slides/reorder', methods=['POST'])
+def reorder_slide():
+    """Przesuń slajd w górę lub w dół"""
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Brak autoryzacji'}), 401
+    
+    data = request.get_json()
+    filename = data.get('filename')
+    direction = data.get('direction')  # 'up' lub 'down'
+    
+    if not filename or direction not in ('up', 'down'):
+        return jsonify({'error': 'Nieprawidłowe parametry'}), 400
+    
+    try:
+        conn = sqlite3.connect('kiosk.db')
+        c = conn.cursor()
+        
+        # Pobierz wszystkie slajdy posortowane wg pozycji
+        c.execute("SELECT filename, position FROM slide_order ORDER BY position ASC")
+        slides = c.fetchall()
+        
+        # Znajdź indeks aktualnego slajdu
+        current_idx = None
+        for i, (fname, pos) in enumerate(slides):
+            if fname == filename:
+                current_idx = i
+                break
+        
+        if current_idx is None:
+            conn.close()
+            return jsonify({'error': 'Slajd nie znaleziony'}), 404
+        
+        # Oblicz nowy indeks
+        if direction == 'up' and current_idx > 0:
+            swap_idx = current_idx - 1
+        elif direction == 'down' and current_idx < len(slides) - 1:
+            swap_idx = current_idx + 1
+        else:
+            conn.close()
+            return jsonify({'success': True})  # Już na skraju
+        
+        # Zamień pozycje
+        fname_a, pos_a = slides[current_idx]
+        fname_b, pos_b = slides[swap_idx]
+        
+        c.execute("UPDATE slide_order SET position=? WHERE filename=?", (pos_b, fname_a))
+        c.execute("UPDATE slide_order SET position=? WHERE filename=?", (pos_a, fname_b))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
