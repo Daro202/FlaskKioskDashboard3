@@ -163,30 +163,26 @@
             
             <!-- Sekcja: Upload zdjęć -->
             <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Upload zdjęć
-                </h2>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg> Zarządzanie zdjęciami (Pokaz slajdów)
+                    </h2>
+                    <button onclick="document.getElementById('file-input').click()" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Dodaj zdjęcie
+                    </button>
+                </div>
                 
-                <form id="upload-form">
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-orange-500 transition-all">
-                        <input type="file" 
-                               id="file-input" 
-                               accept="image/*"
-                               class="hidden">
-                        <label for="file-input" class="cursor-pointer">
-                            <div class="text-6xl mb-4"><svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor" style="margin:0 auto;"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>
-                            <p class="text-lg text-gray-600 mb-2">Kliknij aby wybrać zdjęcie</p>
-                            <p class="text-sm text-gray-500">PNG, JPG, GIF, SVG, WEBP (max 16MB)</p>
-                        </label>
-                    </div>
-                    
-                    <div id="upload-preview" class="hidden mt-6">
-                        <img id="preview-image" src="" alt="Preview" class="max-w-md mx-auto rounded-lg shadow-lg">
-                        <button type="submit" class="mt-4 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg transition-all inline-flex items-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Wyślij zdjęcie
-                        </button>
-                    </div>
+                <form id="upload-form" class="hidden">
+                    <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
                 </form>
+
+                <!-- Siatka zdjęć -->
+                <div id="slides-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Zdjęcia będą ładowane dynamicznie -->
+                    <div class="animate-pulse bg-gray-200 rounded-xl h-48"></div>
+                    <div class="animate-pulse bg-gray-200 rounded-xl h-48"></div>
+                    <div class="animate-pulse bg-gray-200 rounded-xl h-48"></div>
+                </div>
             </div>
             
             <!-- Sekcja: Upload pliku Excel (Export.xlsx) -->
@@ -425,6 +421,97 @@
     
     <!-- Skrypty -->
     <script>
+        // Pokazywanie komunikatu sukcesu
+        function showSuccess() {
+            const msg = document.getElementById('success-message');
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 3000);
+        }
+
+        // Zarządzanie zdjęciami
+        async function loadSlides() {
+            try {
+                const response = await fetch('/api/slides');
+                const slides = await response.json();
+                const grid = document.getElementById('slides-grid');
+                if (!grid) return;
+                
+                grid.innerHTML = '';
+                
+                if (slides.length === 0) {
+                    grid.innerHTML = '<div class="col-span-full py-12 text-center text-gray-500 italic">Brak zdjęć w pokazie slajdów.</div>';
+                    return;
+                }
+                
+                slides.forEach(slide => {
+                    const card = document.createElement('div');
+                    card.className = 'group relative bg-gray-50 rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all h-48';
+                    card.innerHTML = `
+                        <img src="${slide.url}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center">
+                            <button onclick="deleteSlide('${slide.name}')" class="opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white p-3 rounded-full transition-all shadow-lg transform hover:scale-110">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                            </button>
+                        </div>
+                        <div class="absolute bottom-2 left-2 right-2 bg-white bg-opacity-90 py-1 px-2 rounded text-[10px] truncate text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                            ${slide.name}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Błąd ładowania zdjęć:', error);
+            }
+        }
+
+        async function deleteSlide(filename) {
+            if (!confirm(`Czy na pewno chcesz usunąć zdjęcie ${filename}?`)) return;
+            
+            try {
+                const response = await fetch(`/api/slide/${encodeURIComponent(filename)}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess();
+                    loadSlides();
+                } else {
+                    alert('Błąd: ' + result.error);
+                }
+            } catch (error) {
+                alert('Wystąpił błąd podczas usuwania zdjęcia.');
+            }
+        }
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                uploadImage(input.files[0]);
+            }
+        }
+
+        async function uploadImage(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess();
+                    loadSlides();
+                } else {
+                    alert('Błąd uploadu: ' + result.error);
+                }
+            } catch (error) {
+                alert('Błąd podczas wysyłania zdjęcia.');
+            }
+        }
+
         // Zapisywanie ustawień
         document.getElementById('settings-form').addEventListener('submit', async (e) => {
             e.preventDefault();
